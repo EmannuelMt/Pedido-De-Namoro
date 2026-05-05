@@ -1,0 +1,149 @@
+{
+  "entities": {
+    "userProfile": {
+      "title": "User Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "bio": { "type": "string" },
+        "themeMode": { "type": "string" },
+        "config": { "type": "object" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["displayName", "email"]
+    },
+    "Letter": {
+      "title": "Letter",
+      "description": "A love letter or message",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "authorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "authorId", "createdAt"]
+    },
+    "MusicTrack": {
+      "title": "Music Track",
+      "description": "A musical track or frequency shared by the couple",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "artist": { "type": "string" },
+        "spotify": { "type": "string" },
+        "reason": { "type": "string" },
+        "lyrics": { "type": "string" },
+        "authorId": { "type": "string" },
+        "likedBy": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "spotify", "authorId", "createdAt"]
+    },
+    "SharedGame": {
+      "title": "Shared Game",
+      "description": "A game that the couple plays together",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "desc": { "type": "string" },
+        "image": { "type": "string" },
+        "authorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "image", "authorId", "createdAt"]
+    },
+    "GalleryPhoto": {
+      "title": "Gallery Photo",
+      "description": "A photo shared in the gallery",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "caption": { "type": "string" },
+        "category": { "type": "string" },
+        "authorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["url", "authorId", "createdAt"]
+    },
+    "Album": {
+      "title": "Album",
+      "description": "A collection of photos",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "desc": { "type": "string" },
+        "cover": { "type": "string" },
+        "photos": { "type": "array", "items": { "type": "string" } },
+        "authorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "authorId", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "A notification for a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "success", "warning", "game", "photo", "letter"] },
+        "read": { "type": "boolean" },
+        "link": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "message", "type", "read", "createdAt"]
+    },
+    "Secret": {
+      "title": "Secret",
+      "description": "A shared secret",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["content", "authorId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "userProfile",
+      "description": "User profiles"
+    },
+    "/secrets/{secretId}": {
+      "schema": "Secret",
+      "description": "Shared secrets"
+    },
+    "/playlist/{trackId}": {
+      "schema": "MusicTrack",
+      "description": "Shared songs"
+    },
+    "/sharedGames/{gameId}": {
+      "schema": "SharedGame",
+      "description": "Shared games"
+    },
+    "/gallery/{photoId}": {
+      "schema": "GalleryPhoto",
+      "description": "Shared photos"
+    },
+    "/letters/{letterId}": {
+      "schema": "Letter",
+      "description": "Love letters"
+    },
+    "/albums/{albumId}": {
+      "schema": "Album",
+      "description": "Photo albums"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    }
+  }
+}

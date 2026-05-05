@@ -1,0 +1,175 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Connection Test ---
+    match /test/connection {
+      allow get: if true;
+    }
+
+    // --- Secrets ---
+    match /secrets/{secretId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidSecret(incoming());
+      allow update: if isSignedIn() && existing().authorId == request.auth.uid && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['content', 'authorName']) &&
+                    isValidSecret(incoming());
+      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
+    }
+
+    function isValidSecret(data) {
+      return data.keys().hasAll(['content', 'authorId', 'createdAt']) &&
+             data.content is string && data.content.size() <= 10000 &&
+             (!data.keys().contains('authorName') || (data.authorName is string && data.authorName.size() <= 100)) &&
+             data.authorId == request.auth.uid &&
+             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
+    }
+
+    // --- User Profiles ---
+    match /users/{userId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isOwner(userId);
+    }
+
+    // --- Letters ---
+    match /letters/{letterId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidLetter(incoming());
+      allow update: if isSignedIn() && existing().authorId == request.auth.uid && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content']) &&
+                    isValidLetter(incoming());
+      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
+    }
+
+    function isValidLetter(data) {
+      return data.keys().hasAll(['title', 'content', 'authorId', 'createdAt']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.content is string && data.content.size() <= 10000 &&
+             data.authorId == request.auth.uid &&
+             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
+    }
+
+    // --- Playlist ---
+    match /playlist/{trackId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidMusicTrack(incoming());
+      allow update: if isSignedIn() && isValidMusicTrack(incoming()) && (
+        (existing().authorId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'artist', 'reason', 'lyrics', 'likedBy'])) ||
+        (incoming().diff(existing()).affectedKeys().hasOnly(['likedBy']) && incoming().likedBy is list && incoming().likedBy.size() <= 100)
+      );
+      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
+    }
+
+    function isValidMusicTrack(data) {
+      return data.keys().hasAll(['name', 'spotify', 'authorId', 'createdAt']) &&
+             data.name is string && data.name.size() <= 200 &&
+             data.spotify is string && data.spotify.size() <= 500 &&
+             (resource == null ? data.authorId == request.auth.uid : data.authorId == resource.data.authorId) &&
+             (!data.keys().hasAny(['likedBy']) || (data.likedBy is list && data.likedBy.size() <= 100)) &&
+             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
+    }
+
+    // --- Shared Games ---
+    match /sharedGames/{gameId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidSharedGame(incoming());
+      allow update: if isSignedIn() && existing().authorId == request.auth.uid &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['title', 'desc', 'image']) &&
+                    isValidSharedGame(incoming());
+      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
+    }
+
+    function isValidSharedGame(data) {
+      return data.keys().hasAll(['title', 'image', 'authorId', 'createdAt']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.image is string && data.image.size() <= 500 &&
+             data.authorId == request.auth.uid &&
+             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
+    }
+
+    // --- Gallery ---
+    match /gallery/{photoId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidGalleryPhoto(incoming());
+      allow update: if isSignedIn() && existing().authorId == request.auth.uid &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['caption', 'category']) &&
+                    isValidGalleryPhoto(incoming());
+      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
+    }
+
+    function isValidGalleryPhoto(data) {
+      return data.keys().hasAll(['url', 'authorId', 'createdAt']) &&
+             data.url is string && data.url.size() <= 500 &&
+             data.authorId == request.auth.uid &&
+             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
+    }
+
+    // --- Albums ---
+    match /albums/{albumId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidAlbum(incoming());
+      allow update: if isSignedIn() && existing().authorId == request.auth.uid && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['title', 'desc', 'cover', 'photos']) &&
+                    isValidAlbum(incoming());
+      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
+    }
+
+    function isValidAlbum(data) {
+      return data.keys().hasAll(['title', 'authorId', 'createdAt']) &&
+             data.title is string && data.title.size() <= 100 &&
+             (!data.keys().contains('desc') || (data.desc is string && data.desc.size() <= 500)) &&
+             (!data.keys().contains('cover') || (data.cover is string && data.cover.size() <= 500)) &&
+             (!data.keys().contains('photos') || (data.photos is list && data.photos.size() <= 100)) &&
+             data.authorId == request.auth.uid &&
+             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
+    }
+
+    // --- Notifications ---
+    match /notifications/{notificationId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidNotification(incoming());
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['read']) &&
+                    isValidNotification(incoming());
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['userId', 'title', 'message', 'type', 'read', 'createdAt']) &&
+             data.userId is string &&
+             data.title is string && data.title.size() <= 200 &&
+             data.message is string && data.message.size() <= 1000 &&
+             data.type in ['info', 'success', 'warning', 'game', 'photo', 'letter'] &&
+             data.read is bool &&
+             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
+    }
+  }
+}
