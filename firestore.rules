@@ -171,5 +171,35 @@ service cloud.firestore {
              data.read is bool &&
              (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
     }
+    // --- Proposals & Universes ---
+    match /proposals/{proposalId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn() && incoming().creatorId == request.auth.uid && isValidProposal(incoming());
+      allow update: if isSignedIn() && existing().creatorId == request.auth.uid && isValidProposal(incoming());
+      allow delete: if isSignedIn() && existing().creatorId == request.auth.uid;
+    }
+
+    match /universes/{universeId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn() && incoming().creatorId == request.auth.uid && isValidUniverse(incoming());
+      allow update: if isSignedIn() && existing().creatorId == request.auth.uid && isValidUniverse(incoming());
+      allow delete: if isSignedIn() && existing().creatorId == request.auth.uid;
+    }
+
+    function isValidUniverse(data) {
+      return data.keys().hasAll(['creatorId', 'createdAt', 'settings']) &&
+             data.creatorId == request.auth.uid &&
+             data.settings is map &&
+             (resource == null ? (data.createdAt is string) || (data.createdAt == request.time) : true); 
+    }
+
+    function isValidProposal(data) {
+      return data.keys().hasAll(['creatorId', 'createdAt', 'settings']) &&
+             data.creatorId == request.auth.uid &&
+             data.settings is map &&
+             (resource == null ? (data.createdAt is string) || (data.createdAt == request.time) : true); 
+    }
   }
 }

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ImageIcon, Plus, Sparkles, Camera, Heart, ArrowRight, X, Trash2, Filter, User as UserIcon, Type, FileText } from 'lucide-react';
-import { PageLayout } from '../App';
+import * as THREE from 'three';
+import { Plus, X, Camera, ImageIcon, Filter, User as UserIcon, FileText, Type, Trash2, ArrowLeft } from 'lucide-react';
 import { audioManager } from '../lib/audioManager';
+import './GalleryView.css';
 
 export interface Moment {
   id: string;
@@ -14,6 +15,41 @@ export interface Moment {
   authorId?: string;
   createdAt?: any;
 }
+
+const DEFAULT_MOMENTS = [
+    {
+        id: 'def-1',
+        url: 'https://images.unsplash.com/photo-1549880338-65ddcdfd017b?w=800&q=80',
+        title: 'Ethereal Form',
+        caption: 'Captured in the gentle light of early morning, this piece explores the boundaries between reality and abstraction.',
+        category: 'Collection',
+        author: 'Elena Varas'
+    },
+    {
+        id: 'def-2',
+        url: 'https://images.unsplash.com/photo-1582201942988-13e60e4556ee?w=800&q=80',
+        title: 'Geometric Silence',
+        caption: 'A study in precision and balance. By stripping away organic chaos, the artist reveals the quiet mathematical purity that underlies nature.',
+        category: 'Collection',
+        author: 'Marcus Thorne'
+    },
+    {
+        id: 'def-3',
+        url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80',
+        title: 'Fading Horizons',
+        caption: 'The horizon line serves as a metaphor for the future—always visible yet forever out of reach.',
+        category: 'Collection',
+        author: 'Isabella Rossi'
+    },
+    {
+        id: 'def-4',
+        url: 'https://images.unsplash.com/photo-1577720580479-7d839d829c73?w=800&q=80',
+        title: 'The Void',
+        caption: 'A minimalist approach challenging the viewer to find meaning in emptiness.',
+        category: 'Collection',
+        author: 'Unknown'
+    }
+];
 
 export const GalleryView = ({ 
   moments, 
@@ -29,7 +65,6 @@ export const GalleryView = ({
   onNavigate: (v: any) => void;
 }) => {
   const [isAdding, setIsAdding] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('Todos');
   const [newMoment, setNewMoment] = useState({
     url: '',
     title: '',
@@ -37,9 +72,247 @@ export const GalleryView = ({
     category: 'Viagem',
     author: user?.displayName || 'Anônimo'
   });
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef({ current: 0, target: 0 });
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  const categories = ['Todos', 'Viagem', 'Aniversário', 'Cotidiano', 'Surpresa', 'Outros'];
   const formCategories = ['Viagem', 'Aniversário', 'Cotidiano', 'Surpresa', 'Outros'];
+
+  const displayMoments = moments.length > 0 ? moments : DEFAULT_MOMENTS as Moment[];
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+
+    if (!containerRef.current) return;
+    
+    // Set custom body classes that might be needed temporarily if we wanted it on body, 
+    // but the gallery class on the wrapper is safer.
+
+    const CONFIG = {
+        slideCount: displayMoments.length,
+        spacingX: 45,
+        pWidth: 14,
+        pHeight: 18,
+        camZ: 30,
+        wallAngleY: -0.25,
+        snapDelay: 300,
+        lerpSpeed: 0.05
+    };
+
+    const totalGalleryWidth = CONFIG.slideCount * CONFIG.spacingX;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf7f7f5);
+    scene.fog = new THREE.Fog(0xf7f7f5, 10, 110); 
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, CONFIG.camZ);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    
+    // Clear container before appending to avoid duplicates in React strict mode
+    while(containerRef.current.firstChild) {
+      containerRef.current.removeChild(containerRef.current.firstChild);
+    }
+    containerRef.current.appendChild(renderer.domElement);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambient);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    dirLight.position.set(10, 20, 10);
+    scene.add(dirLight);
+
+    const galleryGroup = new THREE.Group();
+    scene.add(galleryGroup);
+
+    const textureLoader = new THREE.TextureLoader();
+    const planeGeo = new THREE.PlaneGeometry(CONFIG.pWidth, CONFIG.pHeight);
+
+    const paintingGroups: THREE.Group[] = [];
+
+    // Fallback texture logic in case an image fails to load
+    const fallbackCanvas = document.createElement('canvas');
+    fallbackCanvas.width = 512;
+    fallbackCanvas.height = 512;
+    const ctx = fallbackCanvas.getContext('2d');
+    if (ctx) {
+        ctx.fillStyle = '#e0e0e0';
+        ctx.fillRect(0, 0, 512, 512);
+        ctx.fillStyle = '#999';
+        ctx.font = '40px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Image Missing', 256, 256);
+    }
+    const fallbackTexture = new THREE.CanvasTexture(fallbackCanvas);
+
+    for(let i=0; i<CONFIG.slideCount; i++) {
+        const group = new THREE.Group();
+        group.position.set(i * CONFIG.spacingX, 0, 0);
+        
+        // Handle texture loading safely
+        let texture = fallbackTexture;
+        try {
+            if (displayMoments[i]?.url) {
+                texture = textureLoader.load(displayMoments[i].url, undefined, undefined, () => {
+                    // on error keep fallback
+                });
+            }
+        } catch(e) {}
+
+        // Basic settings for texture cover
+        texture.center.set(0.5, 0.5);
+
+        const mat = new THREE.MeshBasicMaterial({ map: texture });
+        const mesh = new THREE.Mesh(planeGeo, mat);
+        const edges = new THREE.EdgesGeometry(planeGeo);
+        const outline = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x222222 }));
+
+        const shadowGeo = new THREE.PlaneGeometry(CONFIG.pWidth, CONFIG.pHeight);
+        const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.15 });
+        const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+        shadow.position.set(0.8, -0.8, -0.5); 
+
+        const lineZ = -1;
+        const lineLen = CONFIG.spacingX;
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(-lineLen/2, 14, lineZ), new THREE.Vector3(lineLen/2, 14, lineZ),
+            new THREE.Vector3(-lineLen/2, -14, lineZ), new THREE.Vector3(lineLen/2, -14, lineZ)
+        ]);
+        const lines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: 0xdddddd }));
+
+        group.add(shadow);
+        group.add(mesh);
+        group.add(outline);
+        group.add(lines);
+        
+        galleryGroup.add(group);
+        paintingGroups.push(group);
+    }
+
+    galleryGroup.rotation.y = CONFIG.wallAngleY;
+    galleryGroup.position.x = 8; 
+
+    let snapTimer: any = null;
+    let mouse = { x: 0, y: 0 };
+    let frameId: number;
+
+    const snapToNearest = () => {
+        let sc = scrollRef.current;
+        const index = Math.round(sc.target / CONFIG.spacingX);
+        sc.target = index * CONFIG.spacingX;
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+        scrollRef.current.target += e.deltaY * 0.1;            
+        if(snapTimer) clearTimeout(snapTimer);
+        snapTimer = setTimeout(snapToNearest, CONFIG.snapDelay);
+    };
+
+    let touchStart = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+        touchStart = e.touches[0].clientX;
+        if(snapTimer) clearTimeout(snapTimer);
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+        const diff = touchStart - e.touches[0].clientX;
+        scrollRef.current.target += diff * 0.6;
+        touchStart = e.touches[0].clientX;
+        if(snapTimer) clearTimeout(snapTimer);
+    };
+
+    const handleTouchEnd = () => {
+        snapToNearest();
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    };
+
+    const handleResize = () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('resize', handleResize);
+
+    const updateUIState = (scrollX: number) => {
+        if (CONFIG.slideCount === 0) return;
+        const rawIndex = Math.round(scrollX / CONFIG.spacingX);            
+        const safeIndex = ((rawIndex % CONFIG.slideCount) + CONFIG.slideCount) % CONFIG.slideCount;     
+        // React state update might be too frequent if done every frame without care, 
+        // but setState batches. Doing it in animation loop can be slightly heavy.
+        // We'll use a direct DOM reference update for perf, or a ref.
+        setActiveIndex(safeIndex);
+    };
+
+    let lastSafeIndex = -1;
+
+    const animate = () => {
+        frameId = requestAnimationFrame(animate);
+        let sc = scrollRef.current;
+        sc.current += (sc.target - sc.current) * CONFIG.lerpSpeed;
+        
+        const xMove = sc.current * Math.cos(CONFIG.wallAngleY);
+        const zMove = sc.current * Math.sin(CONFIG.wallAngleY);
+        
+        camera.position.x = xMove;
+        camera.position.z = CONFIG.camZ - zMove;
+        
+        paintingGroups.forEach((group, i) => {
+            const originalX = i * CONFIG.spacingX;
+            const distFromCam = sc.current - originalX;
+            const shift = Math.round(distFromCam / totalGalleryWidth) * totalGalleryWidth;
+            group.position.x = originalX + shift;
+        });
+        
+        camera.rotation.x = mouse.y * 0.05; 
+        camera.rotation.y = -mouse.x * 0.05;
+        
+        if (CONFIG.slideCount > 0) {
+            const rawIndex = Math.round(sc.current / CONFIG.spacingX);            
+            const safeIndex = ((rawIndex % CONFIG.slideCount) + CONFIG.slideCount) % CONFIG.slideCount;     
+            if (safeIndex !== lastSafeIndex) {
+                 lastSafeIndex = safeIndex;
+                 setActiveIndex(safeIndex);
+            }
+        }
+        
+        renderer.render(scene, camera);
+    };
+
+    animate();
+
+    return () => {
+        document.body.style.overflow = '';
+        cancelAnimationFrame(frameId);
+        window.removeEventListener('wheel', handleWheel);
+        window.removeEventListener('touchstart', handleTouchStart);
+        window.removeEventListener('touchmove', handleTouchMove);
+        window.removeEventListener('touchend', handleTouchEnd);
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('resize', handleResize);
+        
+        renderer.dispose();
+        // Clear children
+        if (containerRef.current) {
+            while(containerRef.current.firstChild) {
+              containerRef.current.removeChild(containerRef.current.firstChild);
+            }
+        }
+    };
+  }, [displayMoments]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,304 +327,183 @@ export const GalleryView = ({
     setIsAdding(false);
   };
 
-  const handleFilterChange = (cat: string) => {
-    audioManager.playSound('click');
-    setActiveFilter(cat);
-  };
-
-  const toggleAdding = () => {
-    audioManager.playSound('toggle');
-    setIsAdding(!isAdding);
-  };
-
-  const filteredMoments = activeFilter === 'Todos' 
-    ? moments 
-    : moments.filter(m => m.category === activeFilter);
-
   return (
-    <PageLayout 
-      title="Nossos" 
-      subtitle="Momentos" 
-      description="Cada fragmento de luz e cor guarda um instante que nunca deve ser esquecido."
-      onNavigate={onNavigate}
-      currentView="galeria"
-    >
-      <div className="w-full max-w-7xl mx-auto px-4 py-16 pb-40">
-        
-        {/* Banner Section */}
-        <div className="relative w-full h-[300px] md:h-[400px] rounded-[3rem] overflow-hidden mb-20 shadow-2xl border border-white/10 group">
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
-          <motion.img 
-             initial={{ scale: 1.1 }}
-             animate={{ scale: 1 }}
-             transition={{ duration: 10, ease: "easeOut" }}
-             src="https://images.unsplash.com/photo-1549468057-5b7fa1a41d7a?auto=format&fit=crop&q=80&w=2000"
-             className="w-full h-full object-cover grayscale brightness-90 group-hover:grayscale-0 transition-all duration-[3000ms]"
-             alt="Banner"
-          />
-          <div className="absolute top-0 left-0 w-full h-full p-10 md:p-16 flex flex-col justify-center z-20">
-             <div className="flex items-center gap-3 mb-4">
-               <Camera size={18} className="text-[var(--primary)]" />
-               <span className="text-[var(--primary)] font-mono text-[10px] uppercase tracking-[0.5em] opacity-80">Registros Atemporais</span>
-             </div>
-             <h2 className="text-4xl md:text-6xl font-serif text-white tracking-tighter italic leading-none max-w-xl">
-               Onde a luz toca, <br />
-               <span className="text-glow text-[var(--primary)]">a história fica.</span>
-             </h2>
-          </div>
-        </div>
+    <div className="gallery-body">
+      
+      {/* 3D Canvas */}
+      <div id="canvas-container" ref={containerRef}></div>
+      
+      {/* Top Navbar overlapping the 3D gallery somewhat (or just custom floating buttons) */}
+      <div className="fixed top-8 left-8 right-8 flex justify-between items-center z-[50] pointer-events-auto">
+          {/* Back button */}
+          <button 
+            onClick={() => onNavigate('home')}
+            className="w-12 h-12 bg-white/50 backdrop-blur-md rounded-full flex items-center justify-center text-[#111] hover:bg-black hover:text-white transition-all shadow-md group border border-black/10"
+          >
+             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+          </button>
+      </div>
 
-        {/* Filters and Add Action */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
-           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto p-2 glass-card rounded-[2rem]">
-             <Filter size={16} className="text-white/40 ml-4 mr-2 hidden sm:block" />
-             {categories.map(cat => (
-               <button
-                 key={cat}
-                 onClick={() => handleFilterChange(cat)}
-                 className={`relative px-6 py-3 rounded-full font-sans text-[10px] md:text-xs uppercase tracking-[0.2em] font-semibold transition-all duration-500 overflow-hidden ${
-                   activeFilter === cat 
-                     ? 'text-black shadow-[0_0_20px_rgba(255,255,255,0.3)]' 
-                     : 'text-white/50 hover:text-white/90 bg-white/5'
-                 }`}
-               >
-                 {activeFilter === cat && (
-                   <motion.div 
-                    layoutId="activeFilterBg"
-                    className="absolute inset-0 bg-white rounded-full -z-10"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                 )}
-                 <span className="relative z-10">{cat}</span>
-               </button>
-             ))}
-           </div>
-           
-           <motion.button 
-             whileHover={{ scale: 1.02 }}
-             whileTap={{ scale: 0.98 }}
-             onClick={toggleAdding}
-             className={`px-12 py-5 rounded-full font-sans text-xs uppercase tracking-[0.3em] font-medium transition-all duration-500 flex items-center gap-4 whitespace-nowrap w-full md:w-auto justify-center group ${
-                isAdding 
-                  ? 'bg-rose-500/10 border border-rose-500/30 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.1)] hover:bg-rose-500/20' 
-                  : 'bg-white/5 backdrop-blur-md border border-[var(--primary)]/30 text-white shadow-[0_0_30px_rgba(var(--primary-rgb),0.1)] hover:bg-[var(--primary)] hover:border-[var(--primary)]'
-             }`}
-           >
-             {isAdding ? <><X size={16} className="group-hover:rotate-90 transition-transform duration-500" /> Cancelar</> : <><Plus size={16} className="group-hover:rotate-90 transition-transform duration-500" /> Adicionar Momento</>}
-           </motion.button>
-        </div>
+      {/* Floating Add Button */}
+      <div className="fixed bottom-12 right-12 z-[50] pointer-events-auto">
+          <button 
+            onClick={() => setIsAdding(true)}
+            className="w-16 h-16 bg-[#111] hover:bg-[#333] text-[#f7f7f5] hover:scale-105 active:scale-95 rounded-full flex items-center justify-center transition-all shadow-[0_10px_40px_rgba(0,0,0,0.3)] border border-white/5 group"
+          >
+             <Plus size={24} className="group-hover:rotate-90 transition-transform" />
+          </button>
+      </div>
 
-        {/* Add Moment Form */}
-        <AnimatePresence>
-          {isAdding && (
-            <motion.div
-              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-              animate={{ opacity: 1, height: 'auto', marginBottom: 80 }}
-              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-              className="overflow-hidden"
-            >
-              <form onSubmit={handleSubmit} className="luxury-card p-10 md:p-14 border border-[var(--primary)]/30 bg-black/40 relative">
-                <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none grayscale invert rotate-12">
-                   <Camera size={180} className="text-[var(--primary)]" />
-                </div>
+      <div className="gallery-logo">Nossos<br/>Momentos</div>
+
+      {/* UI Overlay */}
+      <div id="ui-layer">
+          {displayMoments.map((moment, i) => (
+             <div 
+               key={moment.id || `moment-${i}`} 
+               id={`slide-${i}`}
+               className={`slide-content ${activeIndex === i ? 'active' : ''}`}
+             >
+                <span className="catalogue-number">{(i + 1).toString().padStart(2, '0')} / {moment.category || 'Collection'}</span>
                 
-                <h3 className="text-3xl font-serif italic text-white mb-8 tracking-tight flex items-center gap-4">
-                  <span className="w-10 h-px bg-white/20" /> Eternizar Novo Fragmento
-                </h3>
+                {/* Splitting title in two if there is a space for dramatic effect, or just replacing spaces with breaks */}
+                <h1 dangerouslySetInnerHTML={{ __html: (moment.title || '').replace(' ', '<br/>') }} />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-                  <div className="space-y-6">
-                    <div className="space-y-3 p-1">
-                      <label className="text-white/40 font-mono text-[9px] uppercase tracking-widest ml-2 flex items-center gap-2">
-                         <ImageIcon size={12} /> URL da Imagem *
-                      </label>
-                      <input
-                        type="url"
-                        value={newMoment.url}
-                        onChange={e => setNewMoment({...newMoment, url: e.target.value})}
-                        className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-white/80 text-sm font-mono shadow-inner outline-none focus:border-[var(--primary)]/50 transition-colors"
-                        placeholder="https://..."
-                        required
-                      />
+                <div className="gallery-description">
+                    {moment.caption || 'Sem descrição.'}
+                </div>
+                <div className="meta-grid">
+                    <span className="meta-label">Autor</span> <span className="meta-value">{moment.author || 'Desconhecido'}</span>
+                    <span className="meta-label">Ano</span> <span className="meta-value">{new Date(moment.createdAt || Date.now()).getFullYear()}</span>
+                    <span className="meta-label">Ação</span> 
+                    <span className="meta-value">
+                        {onDeleteMoment && (
+                            <button 
+                              className="text-red-600 hover:text-red-800 flex items-center gap-2 text-sm mt-1"
+                              onClick={() => {
+                                  if (window.confirm('Tem certeza que deseja apagar essa lembrança?')) {
+                                      onDeleteMoment(moment.id);
+                                  }
+                              }}
+                            >
+                                <Trash2 size={16} /> Apagar
+                            </button>
+                        )}
+                    </span>
+                </div>
+             </div>
+          ))}
+      </div>
+
+      <div className="scroll-hint">Deslize para explorar</div>
+
+
+      {/* Modal Add Moment */}
+      <AnimatePresence>
+        {isAdding && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+               onClick={() => setIsAdding(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-[#f7f7f5] rounded-[2rem] p-8 md:p-12 max-w-2xl w-full z-10 shadow-2xl relative border border-black/10 max-h-[90vh] overflow-y-auto"
+            >
+              <button 
+                onClick={() => setIsAdding(false)}
+                className="absolute top-6 right-6 w-10 h-10 bg-black/5 hover:bg-black/10 rounded-full flex justify-center items-center text-black/60 transition-colors"
+                type="button"
+              >
+                  <X size={20} />
+              </button>
+
+              <h3 className="text-4xl font-serif italic text-black mb-8 tracking-tight">
+                Novo Momento
+              </h3>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-black/50 font-mono text-[10px] uppercase tracking-widest ml-1">URL da Imagem *</label>
+                        <input
+                           type="url"
+                           value={newMoment.url}
+                           onChange={e => setNewMoment({...newMoment, url: e.target.value})}
+                           className="w-full bg-white border border-black/10 rounded-xl px-5 py-4 text-black text-sm outline-none focus:border-black/50 transition-colors"
+                           placeholder="https://..."
+                           required
+                        />
                     </div>
                     
-                    <div className="space-y-3 p-1">
-                      <label className="text-white/40 font-mono text-[9px] uppercase tracking-widest ml-2 flex items-center gap-2">
-                         <Type size={12} /> Título do Momento *
-                      </label>
-                      <input
-                        type="text"
-                        value={newMoment.title}
-                        onChange={e => setNewMoment({...newMoment, title: e.target.value})}
-                        className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-white/80 text-sm font-serif italic tracking-wide shadow-inner outline-none focus:border-[var(--primary)]/50 transition-colors"
-                        placeholder="Uma tarde inesquecível..."
-                        required
-                      />
+                    <div className="space-y-2">
+                        <label className="text-black/50 font-mono text-[10px] uppercase tracking-widest ml-1">Título *</label>
+                        <input
+                           type="text"
+                           value={newMoment.title}
+                           onChange={e => setNewMoment({...newMoment, title: e.target.value})}
+                           className="w-full bg-white border border-black/10 rounded-xl px-5 py-4 text-black text-sm font-serif italic outline-none focus:border-black/50 transition-colors"
+                           placeholder="Ex: Tarde em Paris..."
+                           required
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-black/50 font-mono text-[10px] uppercase tracking-widest ml-1">Autor</label>
+                        <input
+                           type="text"
+                           value={newMoment.author}
+                           onChange={e => setNewMoment({...newMoment, author: e.target.value})}
+                           className="w-full bg-white border border-black/10 rounded-xl px-5 py-4 text-black text-sm outline-none focus:border-black/50 transition-colors"
+                           placeholder="Autor..."
+                        />
                     </div>
                   </div>
 
-                  <div className="space-y-6 flex flex-col justify-between">
-                    <div className="grid grid-cols-2 gap-4 h-max">
-                      <div className="space-y-3">
-                        <label className="text-white/40 font-mono text-[9px] uppercase tracking-widest ml-2 flex items-center gap-2">
-                           <Filter size={12} /> Filtro
-                        </label>
+                  <div className="space-y-4 flex flex-col justify-between">
+                     <div className="space-y-2">
+                        <label className="text-black/50 font-mono text-[10px] uppercase tracking-widest ml-1">Categoria</label>
                         <select
-                          value={newMoment.category}
-                          onChange={e => setNewMoment({...newMoment, category: e.target.value})}
-                          className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-white/80 text-xs font-mono uppercase tracking-wider shadow-inner outline-none focus:border-[var(--primary)]/50 transition-colors cursor-pointer appearance-none"
+                           value={newMoment.category}
+                           onChange={e => setNewMoment({...newMoment, category: e.target.value})}
+                           className="w-full bg-white border border-black/10 rounded-xl px-5 py-4 text-black text-sm outline-none focus:border-black/50 transition-colors"
                         >
-                          {formCategories.map(cat => (
-                            <option key={cat} value={cat} className="bg-stone-900 text-white">{cat}</option>
-                          ))}
+                           {formCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                         </select>
-                      </div>
+                     </div>
 
-                      <div className="space-y-3">
-                        <label className="text-white/40 font-mono text-[9px] uppercase tracking-widest ml-2 flex items-center gap-2">
-                           <UserIcon size={12} /> Autor
-                        </label>
-                        <input
-                          type="text"
-                          value={newMoment.author}
-                          onChange={e => setNewMoment({...newMoment, author: e.target.value})}
-                          className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-[var(--primary)] text-xs font-mono uppercase tracking-widest shadow-inner outline-none focus:border-[var(--primary)]/50 transition-colors"
-                          placeholder="Quem capturou?"
-                          required
+                     <div className="space-y-2 flex-1">
+                        <label className="text-black/50 font-mono text-[10px] uppercase tracking-widest ml-1">Descrição</label>
+                        <textarea
+                           value={newMoment.caption}
+                           onChange={e => setNewMoment({...newMoment, caption: e.target.value})}
+                           className="w-full bg-white border border-black/10 rounded-xl px-5 py-4 text-black text-sm font-serif italic min-h-[100px] outline-none focus:border-black/50 transition-colors resize-none"
+                           placeholder="Sua reflexão..."
                         />
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 flex-1 pt-2">
-                      <label className="text-white/40 font-mono text-[9px] uppercase tracking-widest ml-2 flex items-center gap-2">
-                         <FileText size={12} /> Descrição / Legenda
-                      </label>
-                      <textarea
-                        value={newMoment.caption}
-                        onChange={e => setNewMoment({...newMoment, caption: e.target.value})}
-                        className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-white/60 text-sm font-serif italic shadow-inner outline-none focus:border-[var(--primary)]/50 transition-colors min-h-[120px] resize-none"
-                        placeholder="Em poucas palavras, o que esse momento significa..."
-                      />
-                    </div>
+                     </div>
                   </div>
                 </div>
 
-                <div className="mt-8 flex justify-end">
-                   <button 
-                     type="submit"
-                     className="px-14 py-5 bg-[var(--primary)] text-white rounded-2xl font-mono text-[10px] uppercase tracking-[0.4em] font-bold shadow-[0_0_30px_var(--primary-glow)] hover:brightness-110 active:scale-95 transition-all flex items-center gap-3"
-                   >
-                     Eternizar <Sparkles size={16} />
-                   </button>
+                <div className="pt-4 flex justify-end">
+                    <button 
+                       type="submit"
+                       className="px-10 py-4 bg-black text-white hover:bg-black/90 rounded-full font-serif italic text-sm transition-all shadow-xl"
+                    >
+                       Salvar na Galeria
+                    </button>
                 </div>
               </form>
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Masonry-style Bento Grid for Moments */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8 auto-rows-[300px]">
-          {moments.length === 0 ? (
-            <div className="md:col-span-4 h-96 flex flex-col items-center justify-center space-y-8">
-              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center animate-pulse">
-                <ImageIcon size={40} className="text-white/20" />
-              </div>
-              <p className="text-white/30 font-serif italic text-xl">Sintonizando memórias...</p>
-            </div>
-          ) : (
-            <AnimatePresence>
-              {filteredMoments.map((moment, i) => {
-              const isLarge = i % 7 === 0;
-              const isTall = i % 5 === 0;
-              const isWide = i % 4 === 0 && !isLarge;
-
-              return (
-                <motion.div
-                  layout
-                  key={moment.id}
-                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
-                  viewport={{ once: true }}
-                  transition={{ delay: (i % 8) * 0.1, duration: 0.5 }}
-                  className={`group relative rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/5 bg-stone-900/40
-                    ${isLarge ? 'md:col-span-2 md:row-span-2' : ''}
-                    ${isTall && !isLarge ? 'md:row-span-2' : ''}
-                    ${isWide ? 'md:col-span-2' : ''}
-                  `}
-                >
-                  <div className="absolute inset-0 z-0 pointer-events-none">
-                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10 opacity-70 group-hover:opacity-40 transition-opacity duration-1000" />
-                     <img 
-                       src={moment.url} 
-                       alt={moment.title || moment.caption} 
-                       className="w-full h-full object-cover transition-transform duration-[4s] group-hover:scale-105"
-                     />
-                  </div>
-
-                  {onDeleteMoment && (
-                    <button 
-                      onClick={() => onDeleteMoment(moment.id)}
-                      className="absolute top-6 right-6 z-30 opacity-0 group-hover:opacity-100 p-3 text-white/40 hover:text-rose-500 hover:bg-rose-500/20 rounded-full transition-all"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  )}
-
-                  <div className="absolute top-6 left-6 z-20">
-                     {moment.category && (
-                       <span className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full font-mono text-[9px] uppercase tracking-widest text-white/80 border border-white/10">
-                         {moment.category}
-                       </span>
-                     )}
-                  </div>
-
-                  <div className="absolute inset-0 z-20 p-8 flex flex-col justify-end translate-y-6 group-hover:translate-y-0 transition-transform duration-700 pointer-events-none">
-                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100 pointer-events-auto">
-                        <div className="w-10 h-[2px] bg-[var(--primary)]/70 mb-4" />
-                        {moment.title && (
-                          <h4 className="text-white font-serif italic text-2xl lg:text-3xl leading-tight mb-2 drop-shadow-md">
-                            {moment.title}
-                          </h4>
-                        )}
-                        {moment.caption && (
-                          <p className="text-white/60 font-serif italic text-sm lg:text-base leading-relaxed mb-4 line-clamp-2 lg:line-clamp-3">
-                            "{moment.caption}"
-                          </p>
-                        )}
-                        <div className="flex items-center gap-2 text-[var(--primary)] font-mono text-[9px] uppercase tracking-widest mt-auto drop-shadow-lg">
-                           <UserIcon size={12} />
-                           <span>Eternizado por {moment.author || 'Nós'}</span>
-                        </div>
-                     </div>
-                  </div>
-
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-          )}
-          
-          {moments.length > 0 && filteredMoments.length === 0 && (
-             <div className="col-span-1 md:col-span-4 h-full min-h-[300px] flex flex-col items-center justify-center opacity-40">
-                <ImageIcon size={48} className="mb-6 opacity-30" />
-                <p className="font-mono text-xs uppercase tracking-widest">Nenhum momento encontrado com este filtro.</p>
-             </div>
-          )}
-        </div>
-        
-        {/* Call to action to continue */}
-        <div className="mt-32 text-center">
-           <motion.button 
-             whileHover={{ scale: 1.05 }}
-             whileTap={{ scale: 0.95 }}
-             onClick={() => onNavigate('playlist')}
-             className="px-20 md:px-24 py-8 md:py-10 luxury-glass text-white border border-rose-500/10 rounded-[3rem] font-bold text-[10px] md:text-xs uppercase tracking-[0.5em] hover:bg-rose-600/20 hover:border-rose-500/40 transition-all shadow-extreme group"
-           >
-             Sintonizar Vibes <ArrowRight size={24} className="inline ml-6 group-hover:translate-x-3 transition-transform text-rose-500" />
-           </motion.button>
-        </div>
-      </div>
-    </PageLayout>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
+

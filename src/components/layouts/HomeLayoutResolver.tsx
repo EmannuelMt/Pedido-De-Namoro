@@ -8,6 +8,7 @@ import { NatureHomeLayout } from './NatureHomeLayout';
 import { TimelineStoryLayout } from './TimelineStoryLayout';
 import { HolographicUILayout } from './HolographicUILayout';
 import { PremiumShowcaseLayout } from './PremiumShowcaseLayout';
+import { ModernLandingLayout } from './ModernLandingLayout';
 
 export type LayoutType = 
   | 'auto' | 'romantic-center' | 'timeline-story' | 'game-hud' | 'dev-terminal' 
@@ -18,7 +19,7 @@ export type LayoutType =
   | 'liquid-layout' | 'glitch-grid' | 'interactive-chaos'
   | 'rhythm-flow' | 'wave-layout' | 'beat-grid'
   | 'paper-scroll' | 'letter-layout' | 'archive-view'
-  | 'postcard-layout' | 'travel-diary' | 'map-explorer';
+  | 'postcard-layout' | 'travel-diary' | 'map-explorer' | 'modern-landing';
 
 export const HomeLayoutResolver = (props: any) => {
   const { themeMode, THEMES, layoutMode } = props;
@@ -92,12 +93,9 @@ export const HomeLayoutResolver = (props: any) => {
         return <HolographicUILayout {...props} />;
       case 'premium-showcase':
         return <PremiumShowcaseLayout {...props} />;
-      case 'romantic-center':
-      case 'postcard-layout':
-      case 'map-explorer':
-      case 'wave-layout':
+      case 'modern-landing':
       default:
-        return <RomanticHomeLayout {...props} />;
+        return <ModernLandingLayout {...props} />;
     }
   };
 

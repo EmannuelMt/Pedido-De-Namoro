@@ -82,12 +82,20 @@
   border-radius: var(--theme-card-radius, 1.25rem);
   box-shadow: var(--theme-card-shadow, 0 8px 32px 0 rgba(0, 0, 0, 0.2));
   transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
 
   &:hover {
     background: var(--theme-card-bg-hover, rgba(255, 255, 255, 0.08));
     border-color: var(--primary);
     transform: var(--theme-card-hover-transform, translateY(-5px));
     box-shadow: var(--theme-card-shadow-hover, 0 30px 60px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px var(--primary));
+  }
+
+  @media (max-width: 768px) {
+    backdrop-filter: blur(8px) saturate(100%);
+    -webkit-backdrop-filter: blur(8px) saturate(100%);
+    box-shadow: none;
+    will-change: auto;
   }
 }
 
@@ -101,6 +109,9 @@
     opacity: 0.03;
     background-image: url("https://grainy-gradients.vercel.app/noise.svg");
     animation: noise 0.2s infinite;
+    @media (max-width: 768px) {
+      display: none;
+    }
   }
 }
 
@@ -124,6 +135,15 @@
   -webkit-backdrop-filter: blur(40px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  will-change: transform, opacity;
+
+  @media (max-width: 768px) {
+    backdrop-filter: blur(10px) saturate(100%);
+    -webkit-backdrop-filter: blur(10px) saturate(100%);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.2);
+    will-change: auto;
+  }
 }
 
 @utility luxury-card {
@@ -136,6 +156,7 @@
   transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
+  will-change: transform, opacity;
 
   &::before {
     content: "";
@@ -157,6 +178,15 @@
     &::before {
       opacity: 0.15;
     }
+  }
+
+  @media (max-width: 768px) {
+    backdrop-filter: blur(10px) saturate(100%);
+    -webkit-backdrop-filter: blur(10px) saturate(100%);
+    box-shadow: none;
+    background: rgba(0, 0, 0, 0.3);
+    will-change: auto;
+    border-radius: 1.5rem;
   }
 }
 
@@ -606,20 +636,30 @@
   background: var(--bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: rgba(244, 63, 94, 0.4);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
+  background: rgba(244, 63, 94, 0.8);
 }
 
+/* Reset Base para Troca de Tema */
 body {
   background-color: var(--bg);
   color: var(--text);
+  transition: background-color 0.5s ease, color 0.5s ease;
   overflow-x: hidden;
-  font-family: var(--font-sans);
+  font-family: var(--font-main, var(--font-sans));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Container de Efeitos (Chuva, Partículas, Neve) */
+#theme-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
 }
 
 html {
@@ -708,6 +748,13 @@ html {
   filter: blur(120px) saturate(140%);
   opacity: 0.25;
   animation: pulse-slow 25s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+
+  @media (max-width: 768px) {
+    filter: blur(40px) saturate(100%);
+    animation: none;
+    will-change: auto;
+  }
 }
 
 .bg-atmosphere::after {
@@ -718,6 +765,10 @@ html {
   opacity: 0.03;
   mix-blend-mode: overlay;
   pointer-events: none;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 }
 
 [data-theme='sage_garden'] .bg-atmosphere { background: #f5f5f5; }
@@ -904,4 +955,135 @@ html {
     rgb(0, 0, 0)
   );
   z-index: -7;
+}
+
+/* ====== DNA v3.0 THEME SPECIFIC EFFECTS ====== */
+
+/* --- NATUREZA --- */
+/* Sage Garden: Brisa suave */
+[data-theme='sage_garden'] .luxury-card, [data-theme='sage_garden'] .glass-card {
+  animation: brisa_suave 4s ease-in-out infinite alternate;
+}
+@keyframes brisa_suave {
+  0% { transform: rotate(0deg) translateX(0); }
+  100% { transform: rotate(0.5deg) translateX(2px); }
+}
+
+/* Deep Basalt: Sombras profundas */
+[data-theme='deep_basalt'] .luxury-card {
+  box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* Warm Clay: Bordas super arredondadas */
+[data-theme='warm_clay'] * {
+  --theme-card-radius: 25px;
+}
+[data-theme='warm_clay'] .luxury-card, [data-theme='warm_clay'] .glass-card {
+  border-radius: 25px !important;
+}
+
+/* Morning Mist: Glassmorphism Blur 20px */
+[data-theme='morning_mist'] .luxury-card, [data-theme='morning_mist'] .glass-card {
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  background: rgba(255,255,255,0.15) !important;
+}
+
+/* Moonlight Date: Glow nos textos */
+[data-theme='moonlight_date'] h1, [data-theme='moonlight_date'] h2, [data-theme='moonlight_date'] h3 {
+  animation: text_glow_pulse 3s infinite alternate;
+}
+@keyframes text_glow_pulse {
+  from { text-shadow: 0 0 10px rgba(197, 202, 233, 0.2); }
+  to { text-shadow: 0 0 25px rgba(197, 202, 233, 0.8); }
+}
+
+/* Sweet Velvet: Textura grão fino */
+[data-theme='sweet_velvet']::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: soft-light;
+}
+
+/* Luxury Classic: Tipografia Serifada Playfair */
+[data-theme='luxury_classic'] {
+  --font-main: "Playfair Display", serif;
+}
+[data-theme='luxury_classic'] h1, [data-theme='luxury_classic'] h2, [data-theme='luxury_classic'] h3 {
+  font-family: var(--font-main);
+  letter-spacing: -0.02em;
+}
+
+/* --- GAMER --- */
+/* Mushroom Kingdom: Animação mola */
+[data-theme='mushroom_kingdom'] .luxury-card:hover {
+  transform: translateY(-15px) scale(1.05) !important;
+  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Spike Planted: Fumaça Teal nas bordas */
+[data-theme='spike_planted'] .luxury-card {
+  box-shadow: 0 0 20px rgba(0, 255, 194, 0.1), inset 0 0 15px rgba(0, 255, 194, 0.1) !important;
+}
+[data-theme='spike_planted'] .luxury-card:hover {
+  box-shadow: 0 0 40px rgba(0, 255, 194, 0.4), inset 0 0 25px rgba(0, 255, 194, 0.2) !important;
+}
+
+/* Cyberpunk Neo: Glitch em Títulos (Hover) */
+[data-theme='cyberpunk_neo'] h1:hover, [data-theme='cyberpunk_neo'] h2:hover {
+  animation: glitch-anim 0.3s linear infinite;
+  color: #FF00FF;
+  text-shadow: 2px 0 #00FFFF, -2px 0 #FF00FF;
+}
+
+/* 8-Bit Retro: Pixels Visíveis (fonte mono geral) */
+[data-theme='8bit_retro'] {
+  --font-main: "JetBrains Mono", monospace;
+}
+[data-theme='8bit_retro'] * {
+  font-family: var(--font-main) !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* --- DEV --- */
+/* Matrix Terminal */
+[data-theme='matrix_terminal'] {
+  --font-main: "JetBrains Mono", monospace;
+}
+[data-theme='matrix_terminal'] * {
+  font-family: var(--font-main) !important;
+}
+/* Compiler Light: Bordas 1px zero sombra */
+[data-theme='compiler_light'] .luxury-card, [data-theme='compiler_light'] .glass-card {
+  box-shadow: none !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+  backdrop-filter: none !important;
+  background: #FFFFFF !important;
+}
+
+/* --- CINEMA --- */
+/* Technicolor: Saturação no talo */
+[data-theme='technicolor'] #theme-overlay {
+  backdrop-filter: saturate(140%) contrast(110%);
+}
+
+/* Noir Film */
+[data-theme='noir_film'] {
+  filter: grayscale(100%) contrast(120%);
+}
+
+/* --- EXPERIMENTAL --- */
+/* Glassmorphism: Tudo é vidro */
+[data-theme='glassmorphism'] .luxury-card, [data-theme='glassmorphism'] .glass-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(40px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5) !important;
 }

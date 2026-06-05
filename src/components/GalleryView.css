@@ -1,0 +1,138 @@
+.gallery-body {
+    background-color: #f7f7f5;
+    color: #111;
+    overflow: hidden;
+}
+
+#canvas-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background-color: #f7f7f5;
+}
+
+#ui-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.gallery-logo {
+    position: fixed;
+    top: 100px;
+    left: 50px;
+    font-family: serif;
+    font-weight: 700;
+    letter-spacing: 2px;
+    font-size: 1rem;
+    text-transform: uppercase;
+    z-index: 10;
+    color: #111;
+}
+
+.slide-content {
+    position: absolute;
+    top: 25%;
+    left: 8%;
+    width: 30%;
+    max-width: 450px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease-out;
+    pointer-events: auto; 
+}
+
+.slide-content.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.slide-content h1 {
+    font-family: serif;
+    font-weight: 400;
+    font-style: italic;
+    font-size: 4rem;
+    margin: 0 0 1.5rem 0;
+    line-height: 1;
+    color: #0d0d0d;
+}
+
+.catalogue-number {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #999;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+.gallery-description {
+    font-size: 1.05rem;
+    font-weight: 300;
+    line-height: 1.8;
+    color: #444;
+    margin-bottom: 3rem;
+    text-align: left;
+}
+
+.meta-grid {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    row-gap: 0.8rem;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 1.5rem;
+}
+
+.meta-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #888;
+    align-self: center;
+}
+
+.meta-value {
+    font-family: serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: #222;
+}
+
+.scroll-hint {
+    position: fixed;
+    bottom: 40px;
+    left: 50px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #aaa;
+}
+
+/* For mobile responsiveness */
+@media (max-width: 768px) {
+    .slide-content {
+        left: 5%;
+        top: 20%;
+        width: 90%;
+    }
+    .slide-content h1 {
+        font-size: 3rem;
+    }
+    .gallery-logo {
+        top: 80px;
+        left: 20px;
+    }
+    .scroll-hint {
+        bottom: 100px;
+        left: 20px;
+    }
+}

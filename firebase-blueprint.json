@@ -11,6 +11,7 @@
         "bio": { "type": "string" },
         "themeMode": { "type": "string" },
         "config": { "type": "object" },
+        "activeProposalId": { "type": "string" },
         "updatedAt": { "type": "string", "format": "date-time" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
@@ -110,6 +111,28 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["content", "authorId", "createdAt"]
+    },
+    "Universe": {
+      "title": "Universe",
+      "description": "User's relationship universe configuration",
+      "type": "object",
+      "properties": {
+        "creatorId": { "type": "string" },
+        "settings": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["creatorId", "settings", "createdAt"]
+    },
+    "Proposal": {
+      "title": "Proposal",
+      "description": "A couple's custom proposal settings",
+      "type": "object",
+      "properties": {
+        "creatorId": { "type": "string" },
+        "settings": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["creatorId", "settings", "createdAt"]
     }
   },
   "firestore": {
@@ -144,6 +167,14 @@
     "/notifications/{notificationId}": {
       "schema": "Notification",
       "description": "User notifications"
+    },
+    "/universes/{universeId}": {
+      "schema": "Universe",
+      "description": "User universes"
+    },
+    "/proposals/{proposalId}": {
+      "schema": "Proposal",
+      "description": "Custom proposals"
     }
   }
 }

@@ -1,0 +1,190 @@
+.new_footer_area {
+    position: relative;
+    width: 100%;
+    /* We inherit the background from the app's theme */
+}
+
+.new_footer_top {
+    padding: 120px 0px 270px;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.new_footer_area .footer_bottom {
+    padding-top: 5px;
+    padding-bottom: 50px;
+}
+
+.footer_bottom {
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 20px;
+    color: var(--text, #7f88a6);
+    opacity: 0.7;
+    padding: 27px 0px;
+}
+
+.new_footer_top .company_widget p {
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 28px;
+    color: var(--text, #6a7695);
+    opacity: 0.8;
+    margin-bottom: 20px;
+}
+
+.new_footer_top .company_widget .f_subscribe_two .btn_get {
+    border-width: 1px;
+    margin-top: 20px;
+}
+
+.btn_get_two {
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    background: var(--primary, #5e2ced);
+    border-color: var(--primary, #5e2ced);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn_get_two:hover {
+    background: transparent;
+    color: var(--primary, #5e2ced);
+}
+
+.btn_get {
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.new_footer_top .f_widget.about-widget .f_list {
+    list-style: none;
+    padding: 0;
+}
+
+.new_footer_top .f_widget.about-widget .f_list li {
+    margin-bottom: 15px;
+}
+
+.new_footer_top .f_widget.about-widget .f_list li a {
+    color: var(--text, #6a7695);
+    opacity: 0.7;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.new_footer_top .f_widget.about-widget .f_list li a:hover {
+    color: var(--primary, #5e2ced);
+    opacity: 1;
+}
+
+.f_widget.about-widget .f_list li:last-child {
+    margin-bottom: 0px;
+}
+
+.new_footer_top .f_social_icon a {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    font-size: 18px;
+    color: var(--text, #858da8);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05); /* Adapt to dark mode slightly */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    -webkit-transition: all 0.2s linear;
+    -o-transition: all 0.2s linear;
+    transition: all 0.2s linear;
+    text-decoration: none;
+}
+
+.new_footer_top .f_social_icon a:hover {
+    background: var(--primary, #5e2ced);
+    border-color: var(--primary, #5e2ced);
+    color: white;
+}
+
+.new_footer_top .f_social_icon a + a {
+    margin-left: 8px;
+}
+
+.new_footer_top .f-title {
+    margin-bottom: 30px;
+    color: var(--text, #263b5e);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.new_footer_top .footer_bg {
+    position: absolute;
+    bottom: 0;
+    /* The image itself has city silhouettes */
+    background: url("https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigB8iI5tb8WSVBuVUGc9UjjB8O0708X7Fdic_4O1LT4CmLHoiwhanLXiRhe82yw0R7LgACQ2IhZaTY0hhmGi0gYp_Ynb49CVzfmXtYHUVKgXXpWvJ_oYT8cB4vzsnJLe3iCwuzj-w6PeYq_JaHmy_CoGoa6nw0FBo-2xLdOPvsLTh_fmYH2xhkaZ-OGQ/s16000/footer_bg.png") no-repeat scroll center 0;
+    width: 100%;
+    height: 266px;
+    opacity: 0.8;
+}
+
+/* Because the images have black elements, we try to make them visible on dark themes by inverting them slightly depending on theme, or just leaving them if the background accommodates.
+If the theme is dark, the black silhouettes might vanish. We can use a CSS filter. */
+.theme-dark .new_footer_top .footer_bg, [data-theme="dark"] .new_footer_top .footer_bg {
+    filter: invert(1) opacity(0.5);
+}
+
+.new_footer_top .footer_bg .footer_bg_one {
+    background: url("https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEia0PYPxwT5ifToyP3SNZeQWfJEWrUENYA5IXM6sN5vLwAKvaJS1pQVu8mOFFUa_ET4JuHNTFAxKURFerJYHDUWXLXl1vDofYXuij45JZelYOjEFoCOn7E6Vxu0fwV7ACPzArcno1rYuVxGB7JY6G7__e4_KZW4lTYIaHSLVaVLzklZBLZnQw047oq5-Q/s16000/volks.gif") no-repeat center center;
+    width: 330px;
+    height: 105px;
+    background-size: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 30%;
+    -webkit-animation: myfirst 22s linear infinite;
+    animation: myfirst 22s linear infinite;
+}
+
+.new_footer_top .footer_bg .footer_bg_two {
+    background: url("https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhyLGwEUVwPK6Vi8xXMymsc-ZXVwLWyXhogZxbcXQYSY55REw_0D4VTQnsVzCrL7nsyjd0P7RVOI5NKJbQ75koZIalD8mqbMquP20fL3DxsWngKkOLOzoOf9sMuxlbyfkIBTsDw5WFUj-YJiI50yzgVjF8cZPHhEjkOP_PRTQXDHEq8AyWpBiJdN9SfQA/s16000/cyclist.gif") no-repeat center center;
+    width: 88px;
+    height: 100px;
+    background-size: 100%;
+    bottom: 0;
+    left: 38%;
+    position: absolute;
+    -webkit-animation: myfirst 30s linear infinite;
+    animation: myfirst 30s linear infinite;
+}
+
+@-moz-keyframes myfirst {
+  0% { left: -25%; }
+  100% { left: 100%; }
+}
+
+@-webkit-keyframes myfirst {
+  0% { left: -25%; }
+  100% { left: 100%; }
+}
+
+@keyframes myfirst {
+  0% { left: -25%; }
+  100% { left: 100%; }
+}
+
+/* Base resets specifically for footer form */
+.new_footer_top .company_widget .form-control {
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text, #fff);
+    margin-bottom: 10px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+.new_footer_top .company_widget .form-control:focus {
+    border-color: var(--primary, #5e2ced);
+}

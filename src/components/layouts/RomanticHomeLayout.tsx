@@ -43,12 +43,17 @@ const SectionHeader = ({ title, subtitle, description, icon: Icon }: any) => (
       <span className="font-mono text-[8px] text-[var(--text-muted)] uppercase tracking-[0.4em]">Capítulo do Amor</span>
     </div>
   </div>
-);export const RomanticHomeLayout = ({ themeMode, user, setView, GALLERY_DATA, PLAYLIST_DATA, SHARED_GAMES, LETTERS_DATA, ALBUMS_DATA }: any) => {
+);export const RomanticHomeLayout = ({ themeMode, user, setView, GALLERY_DATA, PLAYLIST_DATA, SHARED_GAMES, LETTERS_DATA, ALBUMS_DATA, universeData }: any) => {
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
   });
+
+  const settings = universeData?.settings;
+  const emoData = settings?.emotionalData;
+  const partnerName = settings?.partner?.name || "Alma Gêmea";
+  const specialDate = settings?.partner?.specialDate || new Date().toISOString();
 
   const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 1.1]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
@@ -63,7 +68,7 @@ const SectionHeader = ({ title, subtitle, description, icon: Icon }: any) => (
         >
           <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-black to-transparent opacity-60 z-10" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,var(--primary-glow),transparent_80%)]" />
-          <div className="absolute inset-0 backdrop-blur-[140px]" />
+          <div className="absolute inset-0 backdrop-blur-2xl md:backdrop-blur-[140px]" />
           
           {/* Floating Aesthetic Elements */}
           <motion.div 
@@ -72,7 +77,7 @@ const SectionHeader = ({ title, subtitle, description, icon: Icon }: any) => (
               rotate: [0, 10, 0]
             }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/4 left-1/4 w-96 h-96 border border-[var(--primary)]/10 rounded-full blur-xl"
+            className="absolute top-1/4 left-1/4 w-96 h-96 border border-[var(--primary)]/10 rounded-full blur-xl hidden sm:block"
           />
           <motion.div 
             animate={{ 
@@ -80,7 +85,7 @@ const SectionHeader = ({ title, subtitle, description, icon: Icon }: any) => (
               x: [0, 30, 0]
             }}
             transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-1/4 right-1/4 w-[30rem] h-[30rem] border border-[var(--primary)]/5 rounded-full blur-2xl"
+            className="absolute bottom-1/4 right-1/4 w-[30rem] h-[30rem] border border-[var(--primary)]/5 rounded-full blur-2xl hidden md:block"
           />
         </motion.div>
 
@@ -134,7 +139,7 @@ const SectionHeader = ({ title, subtitle, description, icon: Icon }: any) => (
               className="luxury-glass p-12 sm:p-20 rounded-[4rem] text-center relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary)]/10 via-transparent to-transparent opacity-20" />
-              <TimeTogether startDate={new Date('2023-01-01')} />
+              <TimeTogether startDate={new Date(specialDate)} />
               <MagneticButton>
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
@@ -149,8 +154,12 @@ const SectionHeader = ({ title, subtitle, description, icon: Icon }: any) => (
           </div>
           
           <div className="lg:col-span-5 space-y-12">
-            <div className="aspect-[3/4] rounded-[5rem] overflow-hidden border border-white/5 relative group">
-               <img src="https://images.unsplash.com/photo-1516589174184-c6858b1ec000?w=800" className="w-full h-full object-cover grayscale transition-all duration-[3s] group-hover:grayscale-0 group-hover:scale-110" alt="Momentos" />
+            <div className="aspect-[3/4] rounded-[5rem] overflow-hidden border border-white/5 relative group bg-[var(--text)]/5 flex items-center justify-center">
+               {universeData?.settings?.gallery?.[0] ? (
+                 <img src={universeData.settings.gallery[0]} className="w-full h-full object-cover grayscale transition-all duration-[3s] group-hover:grayscale-0 group-hover:scale-110" alt="Momentos" />
+               ) : (
+                 <ImageIcon className="text-[var(--text)]/20 w-16 h-16" />
+               )}
                <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg)]/80 via-transparent to-transparent flex flex-col justify-end p-12">
                   <p className="text-[var(--text-muted)] font-mono text-[9px] uppercase tracking-widest mb-2">Registro de Alma</p>
                   <p className="text-[var(--text)] font-serif text-2xl italic leading-tight">"A melhor parte de mim é você."</p>
@@ -250,9 +259,13 @@ const SectionHeader = ({ title, subtitle, description, icon: Icon }: any) => (
                </div>
 
                <div className="lg:w-1/2 w-full grid grid-cols-2 gap-8 lg:gap-12">
-                  <div className="aspect-[4/5] bg-gray-100 rounded-[3rem] sm:rounded-[4rem] overflow-hidden group shadow-2xl relative">
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-10 opacity-60" />
-                     <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800" className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-110" alt="Music Vibe" />
+                  <div className="aspect-[4/5] bg-[var(--text)]/10 rounded-[3rem] sm:rounded-[4rem] overflow-hidden group shadow-2xl relative flex items-center justify-center">
+                     <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg)]/50 via-transparent to-transparent z-10 opacity-60" />
+                     {universeData?.settings?.gallery?.[0] ? (
+                       <img src={universeData.settings.gallery[0]} className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-110" alt="Music Vibe" />
+                     ) : (
+                       <Music className="text-[var(--text)]/20 w-12 h-12 relative z-10" />
+                     )}
                   </div>
                   <div className="aspect-[4/5] bg-[var(--text)] rounded-[3rem] sm:rounded-[4rem] p-10 md:p-14 flex flex-col justify-between group overflow-hidden relative shadow-2xl mt-12 sm:mt-20">
                      <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-10 transform translate-x-8 -translate-y-8 group-hover:translate-x-4 group-hover:-translate-y-4 transition-all duration-1000 rotate-12">
@@ -305,8 +318,12 @@ const SectionHeader = ({ title, subtitle, description, icon: Icon }: any) => (
             whileHover={{ scale: 0.98 }}
             className="md:col-span-2 md:row-span-1 glass-card rounded-[4rem] p-12 lg:p-14 border border-white/5 flex flex-col sm:flex-row items-center sm:gap-12 relative overflow-hidden group shadow-xl bg-black/20"
           >
-            <div className="shrink-0 w-32 h-32 lg:w-48 lg:h-48 rounded-full border-4 border-white/10 overflow-hidden mb-8 sm:mb-0 group-hover:border-[var(--primary)]/40 transition-colors duration-700 shadow-2xl relative z-10">
-               <img src="https://images.unsplash.com/photo-1511200676451-93339178cc73?w=600" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-[2s] scale-110 group-hover:scale-100" />
+            <div className="shrink-0 w-32 h-32 lg:w-48 lg:h-48 rounded-full border-4 border-white/10 overflow-hidden mb-8 sm:mb-0 group-hover:border-[var(--primary)]/40 transition-colors duration-700 shadow-2xl relative z-10 flex items-center justify-center bg-black/40">
+               {universeData?.settings?.gallery?.[0] ? (
+                 <img src={universeData.settings.gallery[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-[2s] scale-110 group-hover:scale-100" />
+               ) : (
+                 <ImageIcon className="text-white/20 w-12 h-12" />
+               )}
             </div>
             <div className="relative z-10 text-center sm:text-left">
               <span className="text-[var(--primary)] font-sans font-semibold text-[10px] uppercase tracking-[0.5em] mb-4 block drop-shadow-md">Legado</span>

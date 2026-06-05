@@ -5,10 +5,18 @@ import { Heart, Stars, CloudLightning, Sparkles } from 'lucide-react';
 interface ThemeBackgroundProps {
   themeMode: string;
   THEMES?: any;
+  universeData?: any;
 }
 
-export const ThemeBackground: React.FC<ThemeBackgroundProps> = ({ themeMode, THEMES }) => {
+export const ThemeBackground: React.FC<ThemeBackgroundProps> = ({ themeMode, THEMES, universeData }) => {
   const currentTheme = THEMES && THEMES[themeMode] ? THEMES[themeMode] : null;
+  const themeConfig = universeData?.settings?.themeConfig;
+  
+  // Custom customStyles override everything if type is custom or ai
+  const customParticles = themeConfig?.customStyle?.particles; // stars, petals, rain, snow, magic, none
+  
+  let effectiveParticles = customParticles;
+
   const category = currentTheme?.category || 'romance';
   const intensity = currentTheme?.intensity || 'balanced';
 
@@ -22,14 +30,29 @@ export const ThemeBackground: React.FC<ThemeBackgroundProps> = ({ themeMode, THE
   const isEmotion = category === 'emotion';
 
   const particleCountMultiplier = intensity === 'immersive' ? 2 : intensity === 'soft' ? 0.5 : 1;
+  const numParticles = Math.floor(15 * particleCountMultiplier);
+
+  // If there's no force override from config, map legacy theme logic:
+  if (!effectiveParticles) {
+    if (isRomance) effectiveParticles = 'petals';
+    else if (isDev) effectiveParticles = 'dots';
+    else if (isNature) effectiveParticles = 'none';
+    else if (isGamer) effectiveParticles = 'magic';
+    else if (isCinema) effectiveParticles = 'none';
+    else effectiveParticles = 'stars';
+  }
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div id="theme-overlay" className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
       {/* Base Night Layer */}
       {(!isNature || themeMode === 'ocean' || themeMode === 'lavender' || themeMode === 'glacier') && themeMode !== 'paper' && themeMode !== '8bit' && !isDev && <div className="night" />}
       
+      {isRomance && (
+        <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-fuchsia-500/5 mix-blend-screen pointer-events-none" />
+      )}
+
       {/* Dynamic Ambient Layer per Theme Style */}
-      {(themeMode === 'aurora' || themeMode === 'nebula' || themeMode === 'nova' || themeMode === 'etheric') && (
+      {(themeMode === 'aurora' || themeMode === 'nebula' || themeMode === 'nova' || themeMode === 'etheric' || themeConfig) && (
         <div className="absolute inset-0 opacity-40 mix-blend-screen transition-opacity duration-1000">
            <div className="absolute inset-0" style={{
               background: `radial-gradient(circle at 50% 50%, var(--primary-glow) 0%, transparent 60%)`,
@@ -40,24 +63,83 @@ export const ThemeBackground: React.FC<ThemeBackgroundProps> = ({ themeMode, THE
              transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
              className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] opacity-30"
            >
-             <div className="absolute inset-0" style={{ background: 'var(--primary-gradient)', filter: 'blur(100px)', borderRadius: '50%' }} />
+             <div className="absolute inset-0" style={{ background: 'var(--primary-gradient, var(--primary))', filter: 'blur(100px)', borderRadius: '50%' }} />
            </motion.div>
         </div>
       )}
 
-      {/* Floating Particles depending on Theme Category */}
-      {isRomance && (
+      {/* Floating Particles depending on Selection */}
+      
+      {effectiveParticles === 'petals' && (
         <div className="absolute inset-0 z-20">
-          {[...Array(15)].map((_, i) => (
+          {[...Array(numParticles)].map((_, i) => (
             <motion.div
-              key={`romance-orb-${i}`}
-              initial={{ y: "110%", x: Math.random() * 100 + "%", opacity: 0.1 }}
-              animate={{ y: "-10%", opacity: [0.1, 0.4, 0.1], x: (Math.random() * 100) + (Math.random() * 20 - 10) + "%" }}
+              key={`petal-${i}`}
+              initial={{ y: "110%", x: Math.random() * 100 + "%", opacity: 0.1, rotate: 0 }}
+              animate={{ y: "-10%", opacity: [0.1, 0.4, 0.1], x: (Math.random() * 100) + (Math.random() * 20 - 10) + "%", rotate: 360 }}
               transition={{ duration: 15 + Math.random() * 20, repeat: Infinity, ease: "linear", delay: Math.random() * -10 }}
               className="absolute text-[var(--primary)]"
             >
               <Heart size={4 + Math.random() * 12} fill="currentColor" />
             </motion.div>
+          ))}
+        </div>
+      )}
+
+      {effectiveParticles === 'stars' && (
+        <div className="absolute inset-0 z-20">
+          {[...Array(numParticles * 2)].map((_, i) => (
+            <motion.div
+              key={`star-${i}`}
+              initial={{ x: Math.random() * 100 + "vw", y: Math.random() * 100 + "vh", opacity: Math.random() * 0.5 + 0.1 }}
+              animate={{ opacity: [0.1, 0.8, 0.1], scale: [0.8, 1.2, 0.8] }}
+              transition={{ duration: 2 + Math.random() * 4, repeat: Infinity, delay: Math.random() * 5 }}
+              className="absolute w-1 h-1 bg-white rounded-full shadow-[0_0_8px_2px_var(--primary-glow)]"
+            />
+          ))}
+        </div>
+      )}
+
+      {effectiveParticles === 'magic' && (
+        <div className="absolute inset-0 z-20">
+          {[...Array(numParticles)].map((_, i) => (
+            <motion.div
+              key={`magic-${i}`}
+              initial={{ y: "110%", x: Math.random() * 100 + "%", opacity: 0 }}
+              animate={{ y: "-10%", opacity: [0, 0.8, 0], x: "+=" + (Math.random() * 20 - 10) + "%" }}
+              transition={{ duration: 8 + Math.random() * 10, repeat: Infinity, ease: "linear", delay: Math.random() * -5 }}
+              className="absolute text-[var(--primary)]"
+            >
+              <Sparkles size={8 + Math.random() * 16} fill="currentColor" />
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {effectiveParticles === 'snow' && (
+        <div className="absolute inset-0 z-20">
+          {[...Array(numParticles * 3)].map((_, i) => (
+            <motion.div
+              key={`snow-${i}`}
+              initial={{ y: "-10%", x: Math.random() * 100 + "%", opacity: 0.1 + Math.random() * 0.5 }}
+              animate={{ y: "110%", x: "+=" + (Math.random() * 20 - 10) + "%" }}
+              transition={{ duration: 10 + Math.random() * 20, repeat: Infinity, ease: "linear", delay: Math.random() * -15 }}
+              className="absolute w-2 h-2 rounded-full bg-white blur-[1px]"
+            />
+          ))}
+        </div>
+      )}
+
+      {effectiveParticles === 'rain' && (
+        <div className="absolute inset-0 z-20">
+          {[...Array(numParticles * 4)].map((_, i) => (
+            <motion.div
+              key={`rain-${i}`}
+              initial={{ y: "-10%", x: Math.random() * 100 + "%", opacity: 0.3 }}
+              animate={{ y: "110%", x: "-=5%" }} // slight angle
+              transition={{ duration: 1 + Math.random() * 1.5, repeat: Infinity, ease: "linear", delay: Math.random() * -2 }}
+              className="absolute w-[1px] h-8 bg-gradient-to-b from-transparent to-white/60"
+            />
           ))}
         </div>
       )}

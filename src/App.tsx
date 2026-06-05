@@ -54,12 +54,18 @@ import { QuizView } from './components/QuizView';
 import { GalleryView } from './components/GalleryView';
 import { PlaylistView } from './components/PlaylistView';
 import { Footer } from './components/Footer';
+import { FooterLayoutWrapper } from './components/FooterLayoutWrapper';
 import { CookieConsent } from './components/CookieConsent';
 import { NotFoundView } from './components/NotFoundView';
-import { SidebarResolver } from './components/SidebarResolver';
+import { Navbar } from './components/Navbar';
+import { NotificationButton } from './components/NotificationButton';
 import { UserMenuResolver } from './components/UserMenuResolver';
 import { GlobalMusicPlayer } from './components/GlobalMusicPlayer';
+import { ProposalWizard } from './components/builder/ProposalWizard';
+import { SetupData } from './store/useBuilderStore';
+import { CustomProposalView } from './components/pedido/CustomProposalView';
 import Loader from './components/Loader';
+import { UniverseEmptyState } from './components/UniverseEmptyState';
 import { 
   Heart, 
   Home,
@@ -127,34 +133,7 @@ type ThemeCategory =
   | 'special' | 'spiritual' | 'emotion' | 'corporate' 
   | 'experimental' | 'music' | 'classic' | 'travel';
 
-type ThemeMode = 
-  // Nature
-  | 'sage_garden' | 'deep_basalt' | 'warm_clay' | 'morning_mist' | 'forest' | 'sand' | 'matcha' | 'volcano' | 'glacier' | 'ocean' | 'aurora'
-  // Romance
-  | 'petal_soft' | 'eternal_gold' | 'moonlight_date' | 'sweet_velvet' | 'cherry' | 'lavender' | 'sunset' | 'nebula' | 'nova' | 'etheric'
-  // Cinema
-  | 'golden_age' | 'technicolor' | 'directors_cut' | 'sci_fi_odyssey' | 'paper'
-  // Gamer
-  | 'mushroom_kingdom' | 'spike_planted' | 'global_offensive' | 'arcade_classic' | 'blue_blur' | 'cyberpunk' | '8bit' | 'vaporwave'
-  // Dev
-  | 'code_midnight' | 'transita_tech' | 'matrix_terminal' | 'compiler_light' | 'midnight' | 'blueprint'
-  // Mixed Old
-  | 'starlight_mountain' | 'crimson_passion' | 'noir_film' | 'neon_noir' | 'hacker_green' | 'holographic'
-  | 'glass' | 'luxury' // Keep luxury as emergency fallback
-  // Spiritual
-  | 'astral_veil' | 'soul_frequency' | 'divine_pulse' | 'celestial_ritual' | 'lunar_oracle'
-  // Emotion
-  | 'inner_echo' | 'silent_mind' | 'memory_fragments' | 'emotional_waves' | 'nostalgia_loop'
-  // Corporate
-  | 'clean_executive' | 'startup_pitch' | 'dark_analytics' | 'business_flow'
-  // Experimental
-  | 'chaos_interface' | 'glitch_reality' | 'liquid_motion' | 'neural_drift'
-  // Music
-  | 'lo_fi_night' | 'synthwave_pulse' | 'acoustic_love' | 'bass_drop'
-  // Classic
-  | 'renaissance_ink' | 'royal_manuscript' | 'vintage_letter' | 'old_cinema_reel'
-  // Travel
-  | 'paris_night' | 'tokyo_neon' | 'santorini_breeze' | 'amazon_roots';
+
 
 interface PaletteColors {
   label: string;
@@ -175,1312 +154,58 @@ interface PaletteColors {
   intensity?: 'soft' | 'balanced' | 'immersive';
 }
 
-const THEMES: Record<ThemeMode, PaletteColors> = {
+
+export type ThemeMode = 
+  | 'sage_garden' | 'deep_basalt' | 'warm_clay' | 'morning_mist' | 'arctic_glacier' | 'deep_ocean' | 'aurora_borealis'
+  | 'petal_soft' | 'eternal_gold' | 'moonlight_date' | 'sweet_velvet' | 'cosmic_nebula' | 'luxury_classic'
+  | 'mushroom_kingdom' | 'spike_planted' | 'global_offensive' | 'arcade_classic' | 'cyberpunk_neo' | '8bit_retro'
+  | 'code_midnight' | 'transita_tech' | 'matrix_terminal' | 'compiler_light' | 'draft_blueprint'
+  | 'golden_age_cinema' | 'technicolor' | 'directors_cut' | 'noir_film'
+  | 'glitch_reality' | 'glassmorphism' | 'neural_drift';
+
+export const THEMES: Record<ThemeMode, PaletteColors> = {
   // --- NATUREZA ---
-  sage_garden: {
-    label: 'Sage Garden',
-    category: 'nature',
-    primary: '#8da399',
-    primaryLight: '#aebdb5',
-    primaryGlow: 'rgba(141, 163, 153, 0.4)',
-    bg: '#f5f5f5',
-    bgAlt: '#e8ecea',
-    text: '#2f3e46',
-    textMuted: 'rgba(47, 62, 70, 0.5)',
-    border: 'rgba(141, 163, 153, 0.2)',
-    glass: 'rgba(255, 255, 255, 0.7)',
-    cardStyle: 'shadow-xl border-sage-200 bg-white/40',
-    animationStyle: 'animate-float',
-    accent: '#52796f'
-  },
-  deep_basalt: {
-    label: 'Deep Basalt',
-    category: 'nature',
-    primary: '#4a4e69',
-    primaryLight: '#9a8c98',
-    primaryGlow: 'rgba(74, 78, 105, 0.4)',
-    bg: '#1a1a1b',
-    bgAlt: '#121213',
-    text: '#f8f9fa',
-    textMuted: 'rgba(248, 249, 250, 0.4)',
-    border: 'rgba(74, 78, 105, 0.3)',
-    glass: 'rgba(0, 0, 0, 0.4)',
-    cardStyle: 'border-white/10 bg-black/40',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#22223b'
-  },
-  warm_clay: {
-    label: 'Warm Clay',
-    category: 'nature',
-    primary: '#bc6c25',
-    primaryLight: '#dda15e',
-    primaryGlow: 'rgba(188, 108, 37, 0.4)',
-    bg: '#fefae0',
-    bgAlt: '#f9f3c9',
-    text: '#283618',
-    textMuted: 'rgba(40, 54, 24, 0.5)',
-    border: 'rgba(188, 108, 37, 0.2)',
-    glass: 'rgba(255, 255, 255, 0.6)',
-    cardStyle: 'rounded-3xl border-clay-200',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#606c38'
-  },
-  morning_mist: {
-    label: 'Morning Mist',
-    category: 'nature',
-    primary: '#9db4c0',
-    primaryLight: '#c2dfe3',
-    primaryGlow: 'rgba(157, 180, 192, 0.4)',
-    bg: '#e0e1dd',
-    bgAlt: '#d1d2d0',
-    text: '#1b263b',
-    textMuted: 'rgba(27, 38, 59, 0.5)',
-    border: 'rgba(157, 180, 192, 0.3)',
-    glass: 'rgba(255, 255, 255, 0.3)',
-    cardStyle: 'backdrop-blur-3xl border-white/40',
-    animationStyle: 'animate-float',
-    accent: '#415a77'
-  },
-  forest: {
-    label: 'Mystic Forest',
-    category: 'nature',
-    primary: '#2d6a4f',
-    primaryLight: '#40916c',
-    primaryGlow: 'rgba(45, 106, 79, 0.4)',
-    bg: '#081c15',
-    bgAlt: '#1b4332',
-    text: '#d8f3dc',
-    textMuted: 'rgba(216, 243, 220, 0.4)',
-    border: 'rgba(45, 106, 79, 0.3)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-emerald-900/50 bg-emerald-950/40',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#b7e4c7'
-  },
-  sand: {
-    label: 'Desert Sand',
-    category: 'nature',
-    primary: '#d6d3d1',
-    primaryLight: '#e7e5e4',
-    primaryGlow: 'rgba(214, 211, 209, 0.3)',
-    bg: '#1c1917',
-    bgAlt: '#292524',
-    text: '#fafaf9',
-    textMuted: 'rgba(250, 250, 249, 0.4)',
-    border: 'rgba(214, 211, 209, 0.1)',
-    glass: 'rgba(255, 255, 255, 0.02)',
-    cardStyle: 'border-stone-800 bg-stone-950/60',
-    animationStyle: 'animate-float',
-    accent: '#78716c'
-  },
-  matcha: {
-    label: 'Matcha Zen',
-    category: 'nature',
-    primary: '#bef264',
-    primaryLight: '#d9f99d',
-    primaryGlow: 'rgba(190, 242, 100, 0.4)',
-    bg: '#052e16',
-    bgAlt: '#064e3b',
-    text: '#f7fee7',
-    textMuted: 'rgba(247, 254, 231, 0.5)',
-    border: 'rgba(190, 242, 100, 0.2)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-lime-500/20 bg-lime-950/40',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#ecfccb'
-  },
-  volcano: {
-    label: 'Obsidian Fire',
-    category: 'nature',
-    primary: '#f97316',
-    primaryLight: '#fb923c',
-    primaryGlow: 'rgba(249, 115, 22, 0.5)',
-    bg: '#0c0a09',
-    bgAlt: '#1c1917',
-    text: '#fff7ed',
-    textMuted: 'rgba(255, 247, 237, 0.5)',
-    border: 'rgba(249, 115, 22, 0.2)',
-    glass: 'rgba(255, 115, 22, 0.03)',
-    cardStyle: 'border-orange-500/30 bg-orange-950/20 shadow-[inset_0_0_20px_rgba(249,115,22,0.1)]',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#ea580c'
-  },
-  glacier: {
-    label: 'Arctic Glacier',
-    category: 'nature',
-    primary: '#38bdf8',
-    primaryLight: '#7dd3fc',
-    primaryGlow: 'rgba(56, 189, 248, 0.5)',
-    bg: '#f0f9ff',
-    bgAlt: '#e0f2fe',
-    text: '#0c4a6e',
-    textMuted: 'rgba(12, 74, 110, 0.6)',
-    border: 'rgba(56, 189, 248, 0.3)',
-    glass: 'rgba(255, 255, 255, 0.7)',
-    cardStyle: 'border-sky-200 bg-white/50 backdrop-blur-xl',
-    animationStyle: 'animate-float',
-    accent: '#0284c7'
-  },
-  ocean: {
-    label: 'Deep Ocean',
-    category: 'nature',
-    primary: '#0ea5e9',
-    primaryLight: '#38bdf8',
-    primaryGlow: 'rgba(14, 165, 233, 0.4)',
-    bg: '#082f49',
-    bgAlt: '#0c4a6e',
-    text: '#f0f9ff',
-    textMuted: 'rgba(240, 249, 255, 0.5)',
-    border: 'rgba(14, 165, 233, 0.2)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-sky-500/20 bg-sky-950/40',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#0284c7'
-  },
-  aurora: {
-    label: 'Aurora Borealis',
-    category: 'nature',
-    primary: '#2dd4bf',
-    primaryLight: '#5eead4',
-    primaryGlow: 'rgba(45, 212, 191, 0.5)',
-    bg: '#042f2e',
-    bgAlt: '#064e3b',
-    text: '#f0fdfa',
-    textMuted: 'rgba(240, 253, 250, 0.5)',
-    border: 'rgba(45, 212, 191, 0.2)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-teal-500/30 bg-teal-950/30 shadow-[0_0_30px_rgba(45,212,191,0.1)]',
-    animationStyle: 'animate-float',
-    accent: '#0d9488'
-  },
+  sage_garden: { label: 'Sage Garden', category: 'nature', primary: '#7D8E7E', primaryLight: '#9DAF9E', primaryGlow: 'rgba(125, 142, 126, 0.4)', bg: '#F1F1E6', bgAlt: '#E8E8DD', text: '#2A302A', textMuted: 'rgba(42, 48, 42, 0.5)', border: 'rgba(125, 142, 126, 0.2)', glass: 'rgba(255, 255, 255, 0.4)', cardStyle: 'border-sage-200 bg-white/40', animationStyle: 'animate-float', accent: '#5F6C5F' },
+  deep_basalt: { label: 'Deep Basalt', category: 'nature', primary: '#2B2B2B', primaryLight: '#4B4B4B', primaryGlow: 'rgba(43, 43, 43, 0.4)', bg: '#1A1A1A', bgAlt: '#111111', text: '#EAEAEA', textMuted: 'rgba(234, 234, 234, 0.5)', border: 'rgba(43, 43, 43, 0.4)', glass: 'rgba(0, 0, 0, 0.6)', cardStyle: 'border-white/10 bg-black/40', animationStyle: 'animate-pulse-subtle', accent: '#111111' },
+  warm_clay: { label: 'Warm Clay', category: 'nature', primary: '#B87352', primaryLight: '#D89372', primaryGlow: 'rgba(184, 115, 82, 0.4)', bg: '#E8D5C4', bgAlt: '#DFC5B2', text: '#3E271C', textMuted: 'rgba(62, 39, 28, 0.6)', border: 'rgba(184, 115, 82, 0.2)', glass: 'rgba(255, 255, 255, 0.3)', cardStyle: 'rounded-[25px] border-clay-200 bg-white/30', animationStyle: 'animate-pulse-slow', accent: '#8B573D' },
+  morning_mist: { label: 'Morning Mist', category: 'nature', primary: '#D1D9E0', primaryLight: '#E8EEF2', primaryGlow: 'rgba(209, 217, 224, 0.5)', bg: '#FFFFFF', bgAlt: '#F5F7F9', text: '#4A5560', textMuted: 'rgba(74, 85, 96, 0.5)', border: 'rgba(209, 217, 224, 0.3)', glass: 'rgba(255, 255, 255, 0.6)', cardStyle: 'backdrop-blur-[20px] bg-white/40 border-white/40', animationStyle: 'animate-float', accent: '#8FA0B0' },
+  arctic_glacier: { label: 'Arctic Glacier', category: 'nature', primary: '#E0F7FA', primaryLight: '#B2EBF2', primaryGlow: 'rgba(224, 247, 250, 0.5)', bg: '#006064', bgAlt: '#004D40', text: '#E0F7FA', textMuted: 'rgba(224, 247, 250, 0.7)', border: 'rgba(224, 247, 250, 0.2)', glass: 'rgba(0, 96, 100, 0.4)', cardStyle: 'border-cyan-200/40 bg-cyan-900/30 backdrop-blur-md', animationStyle: 'animate-pulse-subtle', accent: '#00BCD4' },
+  deep_ocean: { label: 'Deep Ocean', category: 'nature', primary: '#005F73', primaryLight: '#0A9396', primaryGlow: 'rgba(0, 95, 115, 0.5)', bg: '#001219', bgAlt: '#000A0D', text: '#E9D8A6', textMuted: 'rgba(233, 216, 166, 0.5)', border: 'rgba(0, 95, 115, 0.3)', glass: 'rgba(0, 18, 25, 0.6)', cardStyle: 'border-cyan-800/40 bg-[#001219]/60', animationStyle: 'animate-float', accent: '#94D2BD' },
+  aurora_borealis: { label: 'Aurora Borealis', category: 'nature', primary: '#0B3D91', primaryLight: '#00FFAB', primaryGlow: 'rgba(11, 61, 145, 0.6)', bg: '#000000', bgAlt: '#0A0A0A', text: '#00FFAB', textMuted: 'rgba(0, 255, 171, 0.5)', border: 'rgba(11, 61, 145, 0.5)', glass: 'rgba(11, 61, 145, 0.2)', cardStyle: 'border-[#0B3D91] bg-black/50', animationStyle: 'animate-pulse-slow', accent: '#FF00FF' },
 
   // --- ROMANCE ---
-  petal_soft: {
-    label: 'Petal Soft',
-    category: 'romance',
-    primary: '#fbc4ab',
-    primaryLight: '#f08080',
-    primaryGlow: 'rgba(251, 196, 171, 0.4)',
-    bg: '#fff1e6',
-    bgAlt: '#fad2e1',
-    text: '#3d405b',
-    textMuted: 'rgba(61, 64, 91, 0.5)',
-    border: 'rgba(251, 196, 171, 0.4)',
-    glass: 'rgba(255, 255, 255, 0.6)',
-    cardStyle: 'shadow-[0_20px_50px_rgba(251,196,171,0.2)] border-rose-100',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#f4978e'
-  },
-  eternal_gold: {
-    label: 'Eternal Gold',
-    category: 'romance',
-    primary: '#d4af37',
-    primaryLight: '#f9d423',
-    primaryGlow: 'rgba(212, 175, 55, 0.5)',
-    bg: '#000000',
-    bgAlt: '#0a0a0a',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.4)',
-    border: 'rgba(212, 175, 55, 0.3)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-gold-500/20 bg-neutral-900/40 backdrop-blur-xl',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#ffb300'
-  },
-  moonlight_date: {
-    label: 'Moonlight Date',
-    category: 'romance',
-    primary: '#e5e5e5',
-    primaryLight: '#ffffff',
-    primaryGlow: 'rgba(229, 229, 229, 0.3)',
-    bg: '#000814',
-    bgAlt: '#001d3d',
-    text: '#f1f1f1',
-    textMuted: 'rgba(241, 241, 241, 0.4)',
-    border: 'rgba(255, 255, 255, 0.1)',
-    glass: 'rgba(255, 255, 255, 0.02)',
-    cardStyle: 'shadow-[0_0_40px_rgba(255,255,255,0.05)] border-white/5',
-    animationStyle: 'animate-float',
-    accent: '#ffc300'
-  },
-  sweet_velvet: {
-    label: 'Sweet Velvet',
-    category: 'romance',
-    primary: '#60120b',
-    primaryLight: '#9b2226',
-    primaryGlow: 'rgba(96, 18, 11, 0.4)',
-    bg: '#2b0601',
-    bgAlt: '#4c0b05',
-    text: '#f9d5d3',
-    textMuted: 'rgba(249, 213, 211, 0.4)',
-    border: 'rgba(155, 34, 38, 0.3)',
-    glass: 'rgba(0, 0, 0, 0.4)',
-    cardStyle: 'shadow-2xl border-rose-900/50',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#ae2012'
-  },
-  cherry: {
-    label: 'Cherry Blossom',
-    category: 'romance',
-    primary: '#e11d48',
-    primaryLight: '#fb7185',
-    primaryGlow: 'rgba(225, 29, 72, 0.4)',
-    bg: '#4c0519',
-    bgAlt: '#831843',
-    text: '#fff1f2',
-    textMuted: 'rgba(255, 241, 242, 0.5)',
-    border: 'rgba(225, 29, 72, 0.3)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-rose-500/20 bg-rose-950/40',
-    animationStyle: 'animate-float',
-    accent: '#be123c'
-  },
-  lavender: {
-    label: 'Lavender Dream',
-    category: 'romance',
-    primary: '#c084fc',
-    primaryLight: '#e879f9',
-    primaryGlow: 'rgba(192, 132, 252, 0.4)',
-    bg: '#2e1065',
-    bgAlt: '#4c1d95',
-    text: '#f5f3ff',
-    textMuted: 'rgba(245, 243, 255, 0.5)',
-    border: 'rgba(192, 132, 252, 0.2)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-purple-500/20 bg-purple-950/40',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#a855f7'
-  },
-  sunset: {
-    label: 'Sunset Glow',
-    category: 'romance',
-    primary: '#fb923c',
-    primaryLight: '#fcd34d',
-    primaryGlow: 'rgba(251, 146, 60, 0.4)',
-    bg: '#431407',
-    bgAlt: '#7c2d12',
-    text: '#fff7ed',
-    textMuted: 'rgba(255, 247, 237, 0.5)',
-    border: 'rgba(251, 146, 60, 0.2)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-orange-500/20 bg-orange-950/40',
-    animationStyle: 'animate-float',
-    accent: '#f97316'
-  },
-  nebula: {
-    label: 'Cosmic Nebula',
-    category: 'romance',
-    primary: '#f472b6',
-    primaryLight: '#fb923c',
-    primaryGlow: 'rgba(244, 114, 182, 0.5)',
-    bg: '#0f172a',
-    bgAlt: '#1e1b4b',
-    text: '#fdf2f8',
-    textMuted: 'rgba(253, 242, 248, 0.5)',
-    border: 'rgba(244, 114, 182, 0.3)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-pink-500/20 bg-pink-950/20 backdrop-blur-2xl',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#db2777'
-  },
-  nova: {
-    label: 'Supernova',
-    category: 'romance',
-    primary: '#fbbf24',
-    primaryLight: '#f59e0b',
-    primaryGlow: 'rgba(251, 191, 36, 0.5)',
-    bg: '#000000',
-    bgAlt: '#1a1a1a',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.6)',
-    border: 'rgba(251, 191, 36, 0.3)',
-    glass: 'rgba(0, 0, 0, 0.5)',
-    cardStyle: 'border-amber-500/50 bg-neutral-900 shadow-[0_0_30px_rgba(251,191,36,0.1)]',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#f59e0b'
-  },
-  etheric: {
-    label: 'Etheric Spirit',
-    category: 'romance',
-    primary: '#c4b5fd',
-    primaryLight: '#ede9fe',
-    primaryGlow: 'rgba(196, 181, 253, 0.4)',
-    bg: '#ffffff',
-    bgAlt: '#f5f3ff',
-    text: '#4c1d95',
-    textMuted: 'rgba(76, 29, 149, 0.6)',
-    border: 'rgba(196, 181, 253, 0.3)',
-    glass: 'rgba(255, 255, 255, 0.8)',
-    cardStyle: 'border-violet-100 bg-white/70 backdrop-blur-3xl shadow-xl',
-    animationStyle: 'animate-float',
-    accent: '#8b5cf6'
-  },
-
-  // --- CINEMA ---
-  golden_age: {
-    label: 'Golden Age',
-    category: 'cinema',
-    primary: '#ffffff',
-    primaryLight: '#f8f9fa',
-    primaryGlow: 'rgba(255, 255, 255, 0.5)',
-    bg: '#000000',
-    bgAlt: '#050505',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.5)',
-    border: 'rgba(255, 255, 255, 0.4)',
-    glass: 'rgba(0, 0, 0, 0.8)',
-    cardStyle: 'border-white/50 border-2',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#aaaaaa'
-  },
-  technicolor: {
-    label: 'Technicolor',
-    category: 'cinema',
-    primary: '#ff0054',
-    primaryLight: '#ff5400',
-    primaryGlow: 'rgba(255, 0, 84, 0.5)',
-    bg: '#1a1a1a',
-    bgAlt: '#252525',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.5)',
-    border: 'rgba(255, 0, 84, 0.3)',
-    glass: 'rgba(0, 0, 0, 0.5)',
-    cardStyle: 'shadow-[10px_10px_0_rgba(255,0,84,0.3)]',
-    animationStyle: 'animate-float',
-    accent: '#ffbd00'
-  },
-  directors_cut: {
-    label: "Director's Cut",
-    category: 'cinema',
-    primary: '#eb5e28',
-    primaryLight: '#fca311',
-    primaryGlow: 'rgba(235, 94, 40, 0.4)',
-    bg: '#252422',
-    bgAlt: '#403d39',
-    text: '#fffcf2',
-    textMuted: 'rgba(255, 252, 242, 0.4)',
-    border: 'rgba(235, 94, 40, 0.2)',
-    glass: 'rgba(37, 36, 34, 0.8)',
-    cardStyle: 'border-l-4 border-l-[var(--primary)]',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#ccc5b9'
-  },
-  sci_fi_odyssey: {
-    label: 'Sci-Fi Odyssey',
-    category: 'cinema',
-    primary: '#48cae4',
-    primaryLight: '#90e0ef',
-    primaryGlow: 'rgba(72, 202, 228, 0.5)',
-    bg: '#03045e',
-    bgAlt: '#023e8a',
-    text: '#caf0f8',
-    textMuted: 'rgba(202, 240, 248, 0.4)',
-    border: 'rgba(72, 202, 228, 0.3)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-cyan-500/30 shadow-[0_0_50px_rgba(0,180,216,0.2)]',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#00b4d8'
-  },
-  paper: {
-    label: 'Parchment Paper',
-    category: 'cinema',
-    primary: '#1e293b',
-    primaryLight: '#334155',
-    primaryGlow: 'rgba(30, 41, 59, 0.2)',
-    bg: '#fefce8',
-    bgAlt: '#fef9c3',
-    text: '#0f172a',
-    textMuted: 'rgba(15, 23, 42, 0.6)',
-    border: 'rgba(15, 23, 42, 0.1)',
-    glass: 'rgba(0, 0, 0, 0.02)',
-    cardStyle: 'border-slate-200/50 bg-[#fffdf0] shadow-sm font-serif',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#1e293b'
-  },
+  petal_soft: { label: 'Petal Soft', category: 'romance', primary: '#F06292', primaryLight: '#F48FB1', primaryGlow: 'rgba(240, 98, 146, 0.4)', bg: '#FCE4EC', bgAlt: '#F8BBD0', text: '#880E4F', textMuted: 'rgba(136, 14, 79, 0.5)', border: 'rgba(240, 98, 146, 0.2)', glass: 'rgba(252, 228, 236, 0.6)', cardStyle: 'border-pink-200 bg-white/40', animationStyle: 'animate-float', accent: '#C2185B' },
+  eternal_gold: { label: 'Eternal Gold', category: 'romance', primary: '#D4AF37', primaryLight: '#F3E5AB', primaryGlow: 'rgba(212, 175, 55, 0.4)', bg: '#000000', bgAlt: '#0A0A0A', text: '#D4AF37', textMuted: 'rgba(212, 175, 55, 0.6)', border: 'rgba(212, 175, 55, 0.3)', glass: 'rgba(0, 0, 0, 0.6)', cardStyle: 'border-[#D4AF37]/30 bg-black/80', animationStyle: 'animate-pulse-subtle', accent: '#FFFEE0' },
+  moonlight_date: { label: 'Moonlight Date', category: 'romance', primary: '#1A237E', primaryLight: '#C5CAE9', primaryGlow: 'rgba(197, 202, 233, 0.6)', bg: '#1A237E', bgAlt: '#121858', text: '#C5CAE9', textMuted: 'rgba(232, 234, 246, 0.5)', border: 'rgba(197, 202, 233, 0.2)', glass: 'rgba(26, 35, 126, 0.5)', cardStyle: 'border-indigo-300/20 bg-[#1A237E]/40', animationStyle: 'animate-pulse-slow', accent: '#3F51B5' },
+  sweet_velvet: { label: 'Sweet Velvet', category: 'romance', primary: '#880E4F', primaryLight: '#C2185B', primaryGlow: 'rgba(136, 14, 79, 0.4)', bg: '#4A0E0E', bgAlt: '#3A0B0B', text: '#FFCDD2', textMuted: 'rgba(255, 205, 210, 0.5)', border: 'rgba(136, 14, 79, 0.3)', glass: 'rgba(74, 14, 14, 0.5)', cardStyle: 'border-rose-900 bg-[#4A0E0E]/60 texture-grain', animationStyle: 'animate-pulse-subtle', accent: '#E91E63' },
+  cosmic_nebula: { label: 'Cosmic Nebula', category: 'romance', primary: '#FF007F', primaryLight: '#FF3399', primaryGlow: 'rgba(255, 0, 127, 0.5)', bg: '#2D004B', bgAlt: '#1A002B', text: '#FCE4EC', textMuted: 'rgba(252, 228, 236, 0.6)', border: 'rgba(255, 0, 127, 0.3)', glass: 'rgba(45, 0, 75, 0.6)', cardStyle: 'border-pink-500/20 bg-[#2D004B]/60', animationStyle: 'animate-float', accent: '#9C27B0' },
+  luxury_classic: { label: 'Luxury Classic', category: 'romance', primary: '#C0C0C0', primaryLight: '#E0E0E0', primaryGlow: 'rgba(192, 192, 192, 0.4)', bg: '#1B1B1B', bgAlt: '#111111', text: '#F5F5F5', textMuted: 'rgba(245, 245, 245, 0.5)', border: 'rgba(192, 192, 192, 0.2)', glass: 'rgba(27, 27, 27, 0.7)', cardStyle: 'border-gray-500/30 bg-[#1B1B1B]/80 font-serif', animationStyle: 'animate-pulse-subtle', accent: '#FFFFFF' },
 
   // --- GAMER ---
-  mushroom_kingdom: {
-    label: 'Mushroom Kingdom',
-    category: 'gamer',
-    primary: '#f94144',
-    primaryLight: '#f3722c',
-    primaryGlow: 'rgba(249, 65, 68, 0.5)',
-    bg: '#277da1',
-    bgAlt: '#577590',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.6)',
-    border: 'rgba(255, 255, 255, 0.4)',
-    glass: 'rgba(255, 255, 255, 0.1)',
-    cardStyle: 'border-b-8 border-b-black/20 translate-y-[-4px]',
-    animationStyle: 'animate-float',
-    accent: '#f9c74f'
-  },
-  spike_planted: {
-    label: 'Spike Planted',
-    category: 'gamer',
-    primary: '#00f5d4',
-    primaryLight: '#9b5de5',
-    primaryGlow: 'rgba(0, 245, 212, 0.4)',
-    bg: '#1b1b1b',
-    bgAlt: '#252525',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.4)',
-    border: 'rgba(0, 245, 212, 0.3)',
-    glass: 'rgba(0, 0, 0, 0.6)',
-    cardStyle: 'skew-x-[-2deg] border-r-4 border-r-[var(--primary)]',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#fee440'
-  },
-  global_offensive: {
-    label: 'Global Offensive',
-    category: 'gamer',
-    primary: '#9c9e9f',
-    primaryLight: '#bdc3c7',
-    primaryGlow: 'rgba(156, 158, 159, 0.3)',
-    bg: '#1c1c1c',
-    bgAlt: '#2c2c2c',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.4)',
-    border: 'rgba(255, 255, 255, 0.1)',
-    glass: 'rgba(0, 0, 0, 0.5)',
-    cardStyle: 'border-orange-500/20 bg-stone-900/80',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#f39c12'
-  },
-  arcade_classic: {
-    label: 'Arcade Classic',
-    category: 'gamer',
-    primary: '#fee440',
-    primaryLight: '#ffffff',
-    primaryGlow: 'rgba(254, 228, 64, 0.4)',
-    bg: '#000000',
-    bgAlt: '#111111',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.6)',
-    border: '#fee440',
-    glass: '#000000',
-    cardStyle: 'border-4 shadow-[8px_8px_0_#9b5de5]',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#00bbf9'
-  },
-  blue_blur: {
-    label: 'Blue Blur',
-    category: 'gamer',
-    primary: '#0077b6',
-    primaryLight: '#00b4d8',
-    primaryGlow: 'rgba(0, 119, 182, 0.5)',
-    bg: '#023e8a',
-    bgAlt: '#03045e',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.6)',
-    border: 'rgba(255, 255, 255, 0.3)',
-    glass: 'rgba(0, 0, 0, 0.2)',
-    cardStyle: 'shadow-[inset_0_0_20px_white/10]',
-    animationStyle: 'animate-float',
-    accent: '#fee440'
-  },
-  cyberpunk: {
-    label: 'Cyberpunk Neo',
-    category: 'gamer',
-    primary: '#f0abfc',
-    primaryLight: '#22d3ee',
-    primaryGlow: 'rgba(240, 171, 252, 0.5)',
-    bg: '#020617',
-    bgAlt: '#0f172a',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.5)',
-    border: 'rgba(240, 171, 252, 0.4)',
-    glass: 'rgba(0, 0, 0, 0.6)',
-    cardStyle: 'border-2 border-pink-500/50 shadow-[4px_4px_0_#22d3ee]',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#22d3ee'
-  },
-  '8bit': {
-    label: '8-Bit Retro',
-    category: 'gamer',
-    primary: '#ffffff',
-    primaryLight: '#ef4444',
-    primaryGlow: 'rgba(255, 255, 255, 0.4)',
-    bg: '#000000',
-    bgAlt: '#111111',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.5)',
-    border: '#ffffff',
-    glass: '#000000',
-    cardStyle: 'border-4 border-white shadow-[8px_8px_0_rgba(255,255,255,0.2)]',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#ef4444'
-  },
-  vaporwave: {
-    label: 'Vaporwave Dream',
-    category: 'gamer',
-    primary: '#ff71ce',
-    primaryLight: '#01cdfe',
-    primaryGlow: 'rgba(255, 113, 206, 0.5)',
-    bg: '#050015',
-    bgAlt: '#1a0033',
-    text: '#05ffa1',
-    textMuted: 'rgba(5, 255, 161, 0.5)',
-    border: 'rgba(255, 113, 206, 0.3)',
-    glass: 'rgba(1, 205, 254, 0.05)',
-    cardStyle: 'border-2 border-[#b967ff] shadow-[0_0_20px_#ff71ce]',
-    animationStyle: 'animate-float',
-    accent: '#01cdfe'
-  },
+  mushroom_kingdom: { label: 'Mushroom Kingdom', category: 'gamer', primary: '#E91E63', primaryLight: '#2196F3', primaryGlow: 'rgba(33, 150, 243, 0.5)', bg: '#E91E63', bgAlt: '#C2185B', text: '#FFFFFF', textMuted: 'rgba(255, 255, 255, 0.6)', border: 'rgba(33, 150, 243, 0.4)', glass: 'rgba(233, 30, 99, 0.8)', cardStyle: 'border-4 border-blue-400 bg-pink-600 rounded-[20px] shadow-[0_10px_0_#1976D2]', animationStyle: 'animate-float', accent: '#2196F3' },
+  spike_planted: { label: 'Spike Planted', category: 'gamer', primary: '#FA4454', primaryLight: '#FF7380', primaryGlow: 'rgba(250, 68, 84, 0.5)', bg: '#0F1923', bgAlt: '#080E14', text: '#ECE8E1', textMuted: 'rgba(236, 232, 225, 0.5)', border: 'rgba(250, 68, 84, 0.3)', glass: 'rgba(15, 25, 35, 0.6)', cardStyle: 'border-2 border-rose-500/50 bg-[#0F1923]/80 rounded-none', animationStyle: 'animate-pulse-subtle', accent: '#00FFC2' },
+  global_offensive: { label: 'Global Offensive', category: 'gamer', primary: '#4B5320', primaryLight: '#D2B48C', primaryGlow: 'rgba(210, 180, 140, 0.4)', bg: '#4B5320', bgAlt: '#3A4018', text: '#F5F5DC', textMuted: 'rgba(245, 245, 220, 0.5)', border: 'rgba(210, 180, 140, 0.3)', glass: 'rgba(75, 83, 32, 0.8)', cardStyle: 'border-4 border-[#D2B48C] bg-[#4B5320] font-mono', animationStyle: 'animate-pulse-slow', accent: '#D2B48C' },
+  arcade_classic: { label: 'Arcade Classic', category: 'gamer', primary: '#FFFF00', primaryLight: '#FFFF66', primaryGlow: 'rgba(255, 255, 0, 0.6)', bg: '#000000', bgAlt: '#111111', text: '#FFFF00', textMuted: 'rgba(255, 255, 0, 0.6)', border: '#FFFF00', glass: '#000000', cardStyle: 'border-4 border-yellow-400 bg-black font-mono', animationStyle: 'animate-pulse-subtle', accent: '#FF00FF' },
+  cyberpunk_neo: { label: 'Cyberpunk Neo', category: 'gamer', primary: '#FF00FF', primaryLight: '#FF66FF', primaryGlow: 'rgba(255, 0, 255, 0.6)', bg: '#120458', bgAlt: '#0B0236', text: '#00FFFF', textMuted: 'rgba(0, 255, 255, 0.6)', border: 'rgba(255, 0, 255, 0.5)', glass: 'rgba(18, 4, 88, 0.7)', cardStyle: 'border-2 border-fuchsia-500 bg-[#120458]/80 shadow-[0_0_15px_#FF00FF]', animationStyle: 'animate-pulse-slow', accent: '#00FFFF' },
+  '8bit_retro': { label: '8-Bit Retro', category: 'gamer', primary: '#00FF00', primaryLight: '#66FF66', primaryGlow: 'rgba(0, 255, 0, 0.5)', bg: '#202020', bgAlt: '#111111', text: '#FFFFFF', textMuted: 'rgba(255, 255, 255, 0.5)', border: '#00FF00', glass: '#202020', cardStyle: 'border-4 border-green-500 bg-[#202020] font-mono', animationStyle: 'animate-pulse-subtle', accent: '#FF0000' },
 
   // --- DEV ---
-  code_midnight: {
-    label: 'Code Midnight',
-    category: 'dev',
-    primary: '#2ea44f',
-    primaryLight: '#3fb950',
-    primaryGlow: 'rgba(46, 164, 79, 0.4)',
-    bg: '#0d1117',
-    bgAlt: '#161b22',
-    text: '#c9d1d9',
-    textMuted: 'rgba(201, 209, 217, 0.4)',
-    border: 'rgba(48, 54, 61, 0.7)',
-    glass: 'rgba(22, 27, 34, 0.8)',
-    cardStyle: 'border-[#30363d] bg-[#161b22]',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#58a6ff'
-  },
-  transita_tech: {
-    label: 'Transita Tech',
-    category: 'dev',
-    primary: '#00ff88',
-    primaryLight: '#1dcc99',
-    primaryGlow: 'rgba(0, 255, 136, 0.4)',
-    bg: '#ffffff',
-    bgAlt: '#f0fdf4',
-    text: '#001a1a',
-    textMuted: 'rgba(0, 26, 26, 0.5)',
-    border: 'rgba(0, 255, 136, 0.2)',
-    glass: 'rgba(255, 255, 255, 0.9)',
-    cardStyle: 'shadow-2xl border-teal-100',
-    animationStyle: 'animate-float',
-    accent: '#0d9488'
-  },
-  matrix_terminal: {
-    label: 'Matrix Terminal',
-    category: 'dev',
-    primary: '#00ff41',
-    primaryLight: '#00ff41',
-    primaryGlow: 'rgba(0, 255, 65, 0.4)',
-    bg: '#000000',
-    bgAlt: '#000800',
-    text: '#00ff41',
-    textMuted: 'rgba(0, 255, 65, 0.3)',
-    border: '#00ff41',
-    glass: '#000000',
-    cardStyle: 'border-2 shadow-[0_0_15px_#00ff41]',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#00ff41'
-  },
-  compiler_light: {
-    label: 'Compiler Light',
-    category: 'dev',
-    primary: '#005cc5',
-    primaryLight: '#0366d6',
-    primaryGlow: 'rgba(0, 92, 197, 0.3)',
-    bg: '#ffffff',
-    bgAlt: '#fafbfc',
-    text: '#24292e',
-    textMuted: 'rgba(36, 41, 46, 0.5)',
-    border: 'rgba(27, 31, 35, 0.15)',
-    glass: 'rgba(255, 255, 255, 0.9)',
-    cardStyle: 'border-[#e1e4e8] bg-white',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#d73a49'
-  },
-  midnight: {
-    label: 'Purple Midnight',
-    category: 'dev',
-    primary: '#a78bfa',
-    primaryLight: '#c084fc',
-    primaryGlow: 'rgba(167, 139, 250, 0.4)',
-    bg: '#020617',
-    bgAlt: '#1e1b4b',
-    text: '#f5f3ff',
-    textMuted: 'rgba(245, 243, 255, 0.4)',
-    border: 'rgba(167, 139, 250, 0.2)',
-    glass: 'rgba(0, 0, 0, 0.6)',
-    cardStyle: 'border-l-4 border-l-purple-500 bg-slate-950/80',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#8b5cf6'
-  },
-  blueprint: {
-    label: 'Draft Blueprint',
-    category: 'dev',
-    primary: '#38bdf8',
-    primaryLight: '#7dd3fc',
-    primaryGlow: 'rgba(56, 189, 248, 0.4)',
-    bg: '#1e3a8a',
-    bgAlt: '#1e40af',
-    text: '#e0f2fe',
-    textMuted: 'rgba(224, 242, 254, 0.5)',
-    border: 'rgba(56, 189, 248, 0.3)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-sky-400/30 bg-blue-900/40',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#0284c7'
-  },
+  code_midnight: { label: 'Code Midnight', category: 'dev', primary: '#58A6FF', primaryLight: '#79C0FF', primaryGlow: 'rgba(88, 166, 255, 0.4)', bg: '#0D1117', bgAlt: '#010409', text: '#C9D1D9', textMuted: 'rgba(139, 148, 158, 0.8)', border: 'rgba(48, 54, 61, 1)', glass: 'rgba(13, 17, 23, 0.8)', cardStyle: 'border border-[#30363D] bg-[#0D1117] rounded-md font-mono', animationStyle: 'animate-pulse-subtle', accent: '#238636' },
+  transita_tech: { label: 'Transita Tech', category: 'dev', primary: '#28A745', primaryLight: '#34D058', primaryGlow: 'rgba(40, 167, 69, 0.4)', bg: '#F8F9FA', bgAlt: '#E9ECEF', text: '#212529', textMuted: 'rgba(33, 37, 41, 0.6)', border: 'rgba(0, 0, 0, 0.1)', glass: 'rgba(248, 249, 250, 0.9)', cardStyle: 'border border-gray-200 bg-white rounded-lg shadow-sm', animationStyle: 'animate-float', accent: '#0366D6' },
+  matrix_terminal: { label: 'Matrix Terminal', category: 'dev', primary: '#00FF41', primaryLight: '#00FF41', primaryGlow: 'rgba(0, 255, 65, 0.5)', bg: '#000000', bgAlt: '#000000', text: '#00FF41', textMuted: 'rgba(0, 255, 65, 0.6)', border: '#00FF41', glass: '#000000', cardStyle: 'border border-[#00FF41] bg-black font-mono', animationStyle: 'animate-pulse-slow', accent: '#008F11' },
+  compiler_light: { label: 'Compiler Light', category: 'dev', primary: '#D73A49', primaryLight: '#EA4A5A', primaryGlow: 'rgba(215, 58, 73, 0.3)', bg: '#FFFFFF', bgAlt: '#F6F8FA', text: '#24292E', textMuted: 'rgba(36, 41, 46, 0.6)', border: 'rgba(0, 0, 0, 0.1)', glass: 'rgba(255, 255, 255, 0.9)', cardStyle: 'border border-gray-200 bg-white rounded-sm', animationStyle: 'animate-pulse-subtle', accent: '#005CC5' },
+  draft_blueprint: { label: 'Draft Blueprint', category: 'dev', primary: '#FFFFFF', primaryLight: '#FFFFFF', primaryGlow: 'rgba(255, 255, 255, 0.4)', bg: '#003366', bgAlt: '#002244', text: '#FFFFFF', textMuted: 'rgba(255, 255, 255, 0.6)', border: 'rgba(255, 255, 255, 0.3)', glass: 'rgba(0, 51, 102, 0.8)', cardStyle: 'border border-white/40 bg-[#003366] font-mono', animationStyle: 'animate-pulse-subtle', accent: '#66B2FF' },
+
+  // --- CINEMA ---
+  golden_age_cinema: { label: 'Golden Age', category: 'cinema', primary: '#FFFFFF', primaryLight: '#FFFFFF', primaryGlow: 'rgba(255, 255, 255, 0.5)', bg: '#111111', bgAlt: '#000000', text: '#EAEAEA', textMuted: 'rgba(234, 234, 234, 0.5)', border: 'rgba(255, 255, 255, 0.2)', glass: 'rgba(17, 17, 17, 0.8)', cardStyle: 'border-2 border-white/20 bg-[#111111] grayscale', animationStyle: 'animate-pulse-slow', accent: '#888888' },
+  technicolor: { label: 'Technicolor', category: 'cinema', primary: '#FF0054', primaryLight: '#FF5400', primaryGlow: 'rgba(255, 0, 84, 0.6)', bg: '#1A1A1A', bgAlt: '#0F0F0F', text: '#FFFFFF', textMuted: 'rgba(255, 255, 255, 0.6)', border: 'rgba(255, 0, 84, 0.4)', glass: 'rgba(26, 26, 26, 0.7)', cardStyle: 'shadow-[0_10px_30px_rgba(255,0,84,0.3)] saturate-150', animationStyle: 'animate-float', accent: '#FFBD00' },
+  directors_cut: { label: "Director's Cut", category: 'cinema', primary: '#E50914', primaryLight: '#F40612', primaryGlow: 'rgba(229, 9, 20, 0.5)', bg: '#141414', bgAlt: '#000000', text: '#FFFFFF', textMuted: 'rgba(255, 255, 255, 0.6)', border: 'rgba(229, 9, 20, 0.3)', glass: 'rgba(20, 20, 20, 0.8)', cardStyle: 'border-b-4 border-red-600 bg-[#141414]', animationStyle: 'animate-pulse-subtle', accent: '#808080' },
+  noir_film: { label: 'Noir Film', category: 'cinema', primary: '#D3D3D3', primaryLight: '#FFFFFF', primaryGlow: 'rgba(211, 211, 211, 0.3)', bg: '#0A0A0A', bgAlt: '#000000', text: '#DDDDDD', textMuted: 'rgba(221, 221, 221, 0.4)', border: 'rgba(211, 211, 211, 0.2)', glass: 'rgba(10, 10, 10, 0.9)', cardStyle: 'shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/5 bg-black', animationStyle: 'animate-pulse-slow', accent: '#FFFFFF' },
 
   // --- SPECIAL ---
-  glass: {
-    label: 'Glassmorphism',
-    category: 'special',
-    primary: '#ffffff',
-    primaryLight: '#f8fafc',
-    primaryGlow: 'rgba(255, 255, 255, 0.5)',
-    bg: 'transparent',
-    bgAlt: 'rgba(255, 255, 255, 0.05)',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.5)',
-    border: 'rgba(255, 255, 255, 0.2)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'backdrop-blur-3xl',
-    animationStyle: 'animate-float',
-    accent: '#e2e8f0'
-  },
-  luxury: {
-    label: 'Luxury Classic',
-    category: 'romance',
-    primary: '#f43f5e',
-    primaryLight: '#fb7185',
-    primaryGlow: 'rgba(244, 63, 94, 0.4)',
-    bg: '#030101',
-    bgAlt: '#0a0505',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.4)',
-    border: 'rgba(244, 63, 94, 0.2)',
-    glass: 'rgba(255, 255, 255, 0.03)',
-    cardStyle: 'border-rose-500/10 bg-rose-500/5',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#f43f5e'
-  },
-  starlight_mountain: {
-    label: 'Starlight Mountain',
-    category: 'nature',
-    primary: '#c0c0c0',
-    primaryLight: '#ffffff',
-    primaryGlow: 'rgba(192, 192, 192, 0.6)',
-    bg: '#050a16',
-    bgAlt: '#03060a',
-    text: '#e2e8f0',
-    textMuted: 'rgba(226, 232, 240, 0.6)',
-    border: 'rgba(255, 255, 255, 0.1)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-white/10 bg-[#071022]/60 backdrop-blur-xl',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#475569'
-  },
-  crimson_passion: {
-    label: 'Crimson Passion',
-    category: 'romance',
-    primary: '#991b1b',
-    primaryLight: '#b91c1c',
-    primaryGlow: 'rgba(153, 27, 27, 0.5)',
-    bg: '#090505',
-    bgAlt: '#1a0505',
-    text: '#fecaca',
-    textMuted: 'rgba(254, 202, 202, 0.5)',
-    border: 'rgba(153, 27, 27, 0.3)',
-    glass: 'rgba(153, 27, 27, 0.08)',
-    cardStyle: 'border-red-900/30 bg-red-950/20 backdrop-blur-md',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#7f1d1d'
-  },
-  noir_film: {
-    label: 'Noir Film',
-    category: 'cinema',
-    primary: '#d4d4d4',
-    primaryLight: '#f5f5f5',
-    primaryGlow: 'rgba(212, 212, 212, 0.4)',
-    bg: '#000000',
-    bgAlt: '#111111',
-    text: '#fafafa',
-    textMuted: 'rgba(250, 250, 250, 0.4)',
-    border: 'rgba(255, 255, 255, 0.15)',
-    glass: 'rgba(255, 255, 255, 0.05)',
-    cardStyle: 'border-neutral-800 bg-neutral-900/50 backdrop-blur-sm grayscale',
-    animationStyle: 'animate-float',
-    accent: '#525252'
-  },
-  neon_noir: {
-    label: 'Neon Noir',
-    category: 'gamer',
-    primary: '#f0abfc',
-    primaryLight: '#e879f9',
-    primaryGradient: 'linear-gradient(135deg, #f0abfc 0%, #22d3ee 100%)',
-    primaryGlow: 'rgba(240, 171, 252, 0.6)',
-    bg: '#0c0a1a',
-    bgAlt: '#15112e',
-    text: '#fdf4ff',
-    textMuted: 'rgba(253, 244, 255, 0.6)',
-    border: 'rgba(240, 171, 252, 0.3)',
-    glass: 'rgba(240, 171, 252, 0.05)',
-    cardStyle: 'border-fuchsia-400/20 bg-indigo-950/40 backdrop-blur-xl',
-    animationStyle: 'animate-pulse-subtle',
-    accent: '#22d3ee'
-  },
-  hacker_green: {
-    label: 'Hacker Green',
-    category: 'dev',
-    primary: '#4ade80',
-    primaryLight: '#86efac',
-    primaryGlow: 'rgba(74, 222, 128, 0.5)',
-    bg: '#020617',
-    bgAlt: '#000000',
-    text: '#f8fafc',
-    textMuted: 'rgba(248, 250, 252, 0.4)',
-    border: 'rgba(74, 222, 128, 0.2)',
-    glass: 'rgba(74, 222, 128, 0.03)',
-    cardStyle: 'border-green-500/20 bg-black/60 backdrop-blur-lg',
-    animationStyle: 'animate-pulse-fast',
-    accent: '#16a34a'
-  },
-  holographic: {
-    label: 'Holo Reflection',
-    category: 'special',
-    primary: '#a78bfa',
-    primaryLight: '#c084fc',
-    primaryGradient: 'linear-gradient(135deg, #a78bfa 0%, #38bdf8 50%, #f472b6 100%)',
-    primaryGlow: 'rgba(167, 139, 250, 0.6)',
-    bg: '#0f0f13',
-    bgAlt: '#18181b',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.6)',
-    border: 'rgba(255, 255, 255, 0.15)',
-    glass: 'rgba(167, 139, 250, 0.05)',
-    cardStyle: 'border-white/10 bg-white/5 backdrop-blur-2xl drop-shadow-[0_0_15px_rgba(167,139,250,0.3)]',
-    animationStyle: 'animate-float-fast',
-    accent: '#38bdf8'
-  },
-  // --- SPIRITUAL ---
-  astral_veil: {
-    label: 'Astral Veil',
-    category: 'spiritual',
-    primary: '#c084fc',
-    primaryLight: '#d8b4fe',
-    primaryGlow: 'rgba(192, 132, 252, 0.4)',
-    bg: '#0f0524',
-    bgAlt: '#1a0b3b',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.5)',
-    border: 'rgba(192, 132, 252, 0.2)',
-    glass: 'rgba(192, 132, 252, 0.05)',
-    cardStyle: 'border-purple-500/20 bg-purple-900/10 backdrop-blur-md',
-    animationStyle: 'animate-float',
-    accent: '#a855f7',
-    intensity: 'immersive'
-  },
-  soul_frequency: {
-    label: 'Soul Frequency',
-    category: 'spiritual',
-    primary: '#60a5fa',
-    primaryLight: '#93c5fd',
-    primaryGlow: 'rgba(96, 165, 250, 0.4)',
-    bg: '#051224',
-    bgAlt: '#0a1d3b',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.5)',
-    border: 'rgba(96, 165, 250, 0.2)',
-    glass: 'rgba(96, 165, 250, 0.05)',
-    cardStyle: 'border-blue-500/20 bg-blue-900/10 backdrop-blur-md',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#3b82f6',
-    intensity: 'balanced'
-  },
-  divine_pulse: {
-    label: 'Divine Pulse',
-    category: 'spiritual',
-    primary: '#fcd34d',
-    primaryLight: '#fde68a',
-    primaryGlow: 'rgba(252, 211, 77, 0.4)',
-    bg: '#1a1811',
-    bgAlt: '#2c291d',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.6)',
-    border: 'rgba(252, 211, 77, 0.2)',
-    glass: 'rgba(252, 211, 77, 0.05)',
-    cardStyle: 'border-yellow-500/20 bg-yellow-900/10 backdrop-blur-md',
-    animationStyle: 'animate-pulse',
-    accent: '#fbbf24',
-    intensity: 'immersive'
-  },
-  celestial_ritual: {
-    label: 'Celestial Ritual',
-    category: 'spiritual',
-    primary: '#fb923c',
-    primaryLight: '#fdba74',
-    primaryGlow: 'rgba(251, 146, 60, 0.4)',
-    bg: '#1a0b05',
-    bgAlt: '#2c140a',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.5)',
-    border: 'rgba(251, 146, 60, 0.2)',
-    glass: 'rgba(251, 146, 60, 0.05)',
-    cardStyle: 'border-orange-500/20 bg-orange-900/10 backdrop-blur-md',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#f97316',
-    intensity: 'balanced'
-  },
-  lunar_oracle: {
-    label: 'Lunar Oracle',
-    category: 'spiritual',
-    primary: '#94a3b8',
-    primaryLight: '#cbd5e1',
-    primaryGlow: 'rgba(148, 163, 184, 0.4)',
-    bg: '#0f172a',
-    bgAlt: '#1e293b',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.5)',
-    border: 'rgba(148, 163, 184, 0.2)',
-    glass: 'rgba(148, 163, 184, 0.05)',
-    cardStyle: 'border-slate-500/20 bg-slate-900/10 backdrop-blur-md',
-    animationStyle: 'animate-float',
-    accent: '#64748b',
-    intensity: 'soft'
-  },
-  
-  // --- EMOTION ---
-  inner_echo: {
-    label: 'Inner Echo',
-    category: 'emotion',
-    primary: '#a78bfa',
-    primaryLight: '#c4b5fd',
-    primaryGlow: 'rgba(167, 139, 250, 0.2)',
-    bg: '#18181b',
-    bgAlt: '#27272a',
-    text: '#f4f4f5',
-    textMuted: 'rgba(244, 244, 245, 0.5)',
-    border: 'rgba(167, 139, 250, 0.1)',
-    glass: 'rgba(167, 139, 250, 0.02)',
-    cardStyle: 'border-purple-500/10 bg-zinc-900/50 backdrop-blur-xl',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#8b5cf6',
-    intensity: 'soft'
-  },
-  silent_mind: {
-    label: 'Silent Mind',
-    category: 'emotion',
-    primary: '#9ca3af',
-    primaryLight: '#d1d5db',
-    primaryGlow: 'rgba(156, 163, 175, 0.2)',
-    bg: '#111827',
-    bgAlt: '#1f2937',
-    text: '#f9fafb',
-    textMuted: 'rgba(249, 250, 251, 0.5)',
-    border: 'rgba(156, 163, 175, 0.1)',
-    glass: 'rgba(156, 163, 175, 0.02)',
-    cardStyle: 'border-gray-500/10 bg-gray-900/50 backdrop-blur-xl',
-    animationStyle: 'animate-none',
-    accent: '#6b7280',
-    intensity: 'soft'
-  },
-  memory_fragments: {
-    label: 'Memory Fragments',
-    category: 'emotion',
-    primary: '#fcd34d',
-    primaryLight: '#fde68a',
-    primaryGlow: 'rgba(252, 211, 77, 0.3)',
-    bg: '#27272a',
-    bgAlt: '#3f3f46',
-    text: '#fafafa',
-    textMuted: 'rgba(250, 250, 250, 0.6)',
-    border: 'rgba(252, 211, 77, 0.15)',
-    glass: 'rgba(252, 211, 77, 0.05)',
-    cardStyle: 'border-yellow-500/15 bg-zinc-800/60 backdrop-blur-lg',
-    animationStyle: 'animate-float-slow',
-    accent: '#fbbf24',
-    intensity: 'balanced'
-  },
-  emotional_waves: {
-    label: 'Emotional Waves',
-    category: 'emotion',
-    primary: '#60a5fa',
-    primaryLight: '#93c5fd',
-    primaryGlow: 'rgba(96, 165, 250, 0.4)',
-    bg: '#0f172a',
-    bgAlt: '#1e293b',
-    text: '#f8fafc',
-    textMuted: 'rgba(248, 250, 252, 0.5)',
-    border: 'rgba(96, 165, 250, 0.2)',
-    glass: 'rgba(96, 165, 250, 0.05)',
-    cardStyle: 'border-blue-500/20 bg-slate-900/60 backdrop-blur-xl',
-    animationStyle: 'animate-pulse',
-    accent: '#3b82f6',
-    intensity: 'immersive'
-  },
-  nostalgia_loop: {
-    label: 'Nostalgia Loop',
-    category: 'emotion',
-    primary: '#f87171',
-    primaryLight: '#fca5a5',
-    primaryGlow: 'rgba(248, 113, 113, 0.3)',
-    bg: '#2e1010',
-    bgAlt: '#451a1a',
-    text: '#fef2f2',
-    textMuted: 'rgba(254, 242, 242, 0.6)',
-    border: 'rgba(248, 113, 113, 0.2)',
-    glass: 'rgba(248, 113, 113, 0.05)',
-    cardStyle: 'border-red-500/20 bg-red-950/60 backdrop-blur-xl',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#ef4444',
-    intensity: 'balanced'
-  },
-
-  // --- CORPORATE ---
-  clean_executive: {
-    label: 'Clean Executive',
-    category: 'corporate',
-    primary: '#0ea5e9',
-    primaryLight: '#38bdf8',
-    primaryGlow: 'rgba(14, 165, 233, 0.2)',
-    bg: '#ffffff',
-    bgAlt: '#f8fafc',
-    text: '#0f172a',
-    textMuted: '#64748b',
-    border: '#e2e8f0',
-    glass: 'rgba(255, 255, 255, 0.8)',
-    cardStyle: 'border-slate-200 bg-white shadow-sm',
-    animationStyle: 'animate-none',
-    accent: '#0284c7',
-    intensity: 'soft'
-  },
-  startup_pitch: {
-    label: 'Startup Pitch',
-    category: 'corporate',
-    primary: '#8b5cf6',
-    primaryLight: '#a78bfa',
-    primaryGlow: 'rgba(139, 92, 246, 0.3)',
-    bg: '#fafafa',
-    bgAlt: '#f4f4f5',
-    text: '#18181b',
-    textMuted: '#71717a',
-    border: '#e4e4e7',
-    glass: 'rgba(250, 250, 250, 0.9)',
-    cardStyle: 'border-zinc-200 bg-white shadow-md',
-    animationStyle: 'animate-float-fast',
-    accent: '#7c3aed',
-    intensity: 'balanced'
-  },
-  dark_analytics: {
-    label: 'Dark Analytics',
-    category: 'corporate',
-    primary: '#10b981',
-    primaryLight: '#34d399',
-    primaryGlow: 'rgba(16, 185, 129, 0.3)',
-    bg: '#0f172a',
-    bgAlt: '#1e293b',
-    text: '#f8fafc',
-    textMuted: '#94a3b8',
-    border: '#334155',
-    glass: 'rgba(15, 23, 42, 0.8)',
-    cardStyle: 'border-slate-700 bg-slate-800 shadow-lg',
-    animationStyle: 'animate-none',
-    accent: '#059669',
-    intensity: 'balanced'
-  },
-  business_flow: {
-    label: 'Business Flow',
-    category: 'corporate',
-    primary: '#f97316',
-    primaryLight: '#fb923c',
-    primaryGlow: 'rgba(249, 115, 22, 0.2)',
-    bg: '#ffffff',
-    bgAlt: '#fff7ed',
-    text: '#431407',
-    textMuted: '#9a3412',
-    border: '#ffedd5',
-    glass: 'rgba(255, 255, 255, 0.9)',
-    cardStyle: 'border-orange-100 bg-white shadow-sm',
-    animationStyle: 'animate-none',
-    accent: '#ea580c',
-    intensity: 'soft'
-  },
-
-  // --- EXPERIMENTAL ---
-  chaos_interface: {
-    label: 'Chaos Interface',
-    category: 'experimental',
-    primary: '#ef4444',
-    primaryLight: '#f87171',
-    primaryGlow: 'rgba(239, 68, 68, 0.6)',
-    bg: '#000000',
-    bgAlt: '#170000',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.4)',
-    border: 'rgba(239, 68, 68, 0.4)',
-    glass: 'rgba(239, 68, 68, 0.1)',
-    cardStyle: 'border-red-500/40 bg-black/80 backdrop-blur-none mix-blend-difference',
-    animationStyle: 'animate-pulse-fast',
-    accent: '#dc2626',
-    intensity: 'immersive'
-  },
-  glitch_reality: {
-    label: 'Glitch Reality',
-    category: 'experimental',
-    primary: '#06b6d4',
-    primaryLight: '#22d3ee',
-    primaryGlow: 'rgba(6, 182, 212, 0.5)',
-    bg: '#080808',
-    bgAlt: '#111111',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.5)',
-    border: 'rgba(6, 182, 212, 0.3)',
-    glass: 'rgba(6, 182, 212, 0.05)',
-    cardStyle: 'border-cyan-500/30 bg-gray-900/90 backdrop-blur-none',
-    animationStyle: 'animate-pulse',
-    accent: '#0891b2',
-    intensity: 'immersive'
-  },
-  liquid_motion: {
-    label: 'Liquid Motion',
-    category: 'experimental',
-    primary: '#ec4899',
-    primaryLight: '#f472b6',
-    primaryGlow: 'rgba(236, 72, 153, 0.5)',
-    bg: '#170f14',
-    bgAlt: '#2e1e28',
-    text: '#fdf2f8',
-    textMuted: 'rgba(253, 242, 248, 0.6)',
-    border: 'rgba(236, 72, 153, 0.2)',
-    glass: 'rgba(236, 72, 153, 0.05)',
-    cardStyle: 'border-pink-500/20 bg-pink-950/40 backdrop-blur-3xl rounded-3xl',
-    animationStyle: 'animate-float',
-    accent: '#db2777',
-    intensity: 'balanced'
-  },
-  neural_drift: {
-    label: 'Neural Drift',
-    category: 'experimental',
-    primary: '#14b8a6',
-    primaryLight: '#2dd4bf',
-    primaryGlow: 'rgba(20, 184, 166, 0.4)',
-    bg: '#041714',
-    bgAlt: '#082f29',
-    text: '#f0fdfa',
-    textMuted: 'rgba(240, 253, 250, 0.5)',
-    border: 'rgba(20, 184, 166, 0.2)',
-    glass: 'rgba(20, 184, 166, 0.05)',
-    cardStyle: 'border-teal-500/20 bg-teal-950/30 backdrop-blur-xl',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#0d9488',
-    intensity: 'balanced'
-  },
-
-  // --- MUSIC ---
-  lo_fi_night: {
-    label: 'Lo-fi Night',
-    category: 'music',
-    primary: '#a8a29e',
-    primaryLight: '#d6d3d1',
-    primaryGlow: 'rgba(168, 162, 158, 0.3)',
-    bg: '#1c1917',
-    bgAlt: '#292524',
-    text: '#fafaf9',
-    textMuted: 'rgba(250, 250, 249, 0.5)',
-    border: 'rgba(168, 162, 158, 0.15)',
-    glass: 'rgba(168, 162, 158, 0.05)',
-    cardStyle: 'border-stone-500/15 bg-stone-900/50 backdrop-blur-lg',
-    animationStyle: 'animate-float-slow',
-    accent: '#78716c',
-    intensity: 'soft'
-  },
-  synthwave_pulse: {
-    label: 'Synthwave Pulse',
-    category: 'music',
-    primary: '#f472b6',
-    primaryLight: '#f9a8d4',
-    primaryGradient: 'linear-gradient(90deg, #f472b6, #c084fc, #38bdf8)',
-    primaryGlow: 'rgba(244, 114, 182, 0.6)',
-    bg: '#0f0714',
-    bgAlt: '#1a0b26',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.6)',
-    border: 'rgba(244, 114, 182, 0.4)',
-    glass: 'rgba(244, 114, 182, 0.1)',
-    cardStyle: 'border-pink-500/40 bg-purple-950/60 backdrop-blur-xl',
-    animationStyle: 'animate-pulse-fast',
-    accent: '#ec4899',
-    intensity: 'immersive'
-  },
-  acoustic_love: {
-    label: 'Acoustic Love',
-    category: 'music',
-    primary: '#d6d3d1',
-    primaryLight: '#e7e5e4',
-    primaryGlow: 'rgba(214, 211, 209, 0.3)',
-    bg: '#44403c',
-    bgAlt: '#57534e',
-    text: '#fafaf9',
-    textMuted: 'rgba(250, 250, 249, 0.7)',
-    border: 'rgba(214, 211, 209, 0.2)',
-    glass: 'rgba(214, 211, 209, 0.05)',
-    cardStyle: 'border-stone-300/20 bg-stone-800/80 backdrop-blur-md',
-    animationStyle: 'animate-none',
-    accent: '#a8a29e',
-    intensity: 'soft'
-  },
-  bass_drop: {
-    label: 'Bass Drop',
-    category: 'music',
-    primary: '#fbbf24',
-    primaryLight: '#fcd34d',
-    primaryGlow: 'rgba(251, 191, 36, 0.5)',
-    bg: '#18181b',
-    bgAlt: '#27272a',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.4)',
-    border: 'rgba(251, 191, 36, 0.3)',
-    glass: 'rgba(251, 191, 36, 0.05)',
-    cardStyle: 'border-yellow-500/30 bg-zinc-900/80 backdrop-blur-md',
-    animationStyle: 'animate-pulse',
-    accent: '#f59e0b',
-    intensity: 'immersive'
-  },
-
-  // --- CLASSIC ---
-  renaissance_ink: {
-    label: 'Renaissance Ink',
-    category: 'classic',
-    primary: '#78716c',
-    primaryLight: '#a8a29e',
-    primaryGlow: 'rgba(120, 113, 108, 0.2)',
-    bg: '#ece8e1',
-    bgAlt: '#e5e0d8',
-    text: '#292524',
-    textMuted: '#57534e',
-    border: '#d6d3d1',
-    glass: 'rgba(236, 232, 225, 0.8)',
-    cardStyle: 'border-stone-300 bg-[#f5f3ef] shadow-sm',
-    animationStyle: 'animate-none',
-    accent: '#57534e',
-    intensity: 'soft'
-  },
-  royal_manuscript: {
-    label: 'Royal Manuscript',
-    category: 'classic',
-    primary: '#b45309',
-    primaryLight: '#d97706',
-    primaryGlow: 'rgba(180, 83, 9, 0.3)',
-    bg: '#fef3c7',
-    bgAlt: '#fde68a',
-    text: '#451a03',
-    textMuted: '#78350f',
-    border: '#fcd34d',
-    glass: 'rgba(254, 243, 199, 0.8)',
-    cardStyle: 'border-amber-300 bg-amber-50 shadow-md',
-    animationStyle: 'animate-none',
-    accent: '#92400e',
-    intensity: 'balanced'
-  },
-  vintage_letter: {
-    label: 'Vintage Letter',
-    category: 'classic',
-    primary: '#8b5cf6',
-    primaryLight: '#a78bfa',
-    primaryGlow: 'rgba(139, 92, 246, 0.2)',
-    bg: '#faf5ff',
-    bgAlt: '#f3e8ff',
-    text: '#3b0764',
-    textMuted: '#6b21a8',
-    border: '#e9d5ff',
-    glass: 'rgba(250, 245, 255, 0.8)',
-    cardStyle: 'border-purple-200 bg-white shadow-sm',
-    animationStyle: 'animate-none',
-    accent: '#7e22ce',
-    intensity: 'soft'
-  },
-  old_cinema_reel: {
-    label: 'Old Cinema Reel',
-    category: 'classic',
-    primary: '#52525b',
-    primaryLight: '#71717a',
-    primaryGlow: 'rgba(82, 82, 91, 0.3)',
-    bg: '#09090b',
-    bgAlt: '#18181b',
-    text: '#e4e4e7',
-    textMuted: '#a1a1aa',
-    border: '#27272a',
-    glass: 'rgba(9, 9, 11, 0.6)',
-    cardStyle: 'border-zinc-800 bg-zinc-900 shadow-xl grayscale brightness-90',
-    animationStyle: 'animate-pulse-slow',
-    accent: '#3f3f46',
-    intensity: 'immersive'
-  },
-
-  // --- TRAVEL ---
-  paris_night: {
-    label: 'Paris Night',
-    category: 'travel',
-    primary: '#fbbf24',
-    primaryLight: '#fcd34d',
-    primaryGlow: 'rgba(251, 191, 36, 0.4)',
-    bg: '#171717',
-    bgAlt: '#262626',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.6)',
-    border: 'rgba(251, 191, 36, 0.2)',
-    glass: 'rgba(251, 191, 36, 0.05)',
-    cardStyle: 'border-amber-500/20 bg-neutral-900/80 backdrop-blur-md',
-    animationStyle: 'animate-float',
-    accent: '#f59e0b',
-    intensity: 'balanced'
-  },
-  tokyo_neon: {
-    label: 'Tokyo Neon',
-    category: 'travel',
-    primary: '#f0abfc',
-    primaryLight: '#f5d0fe',
-    primaryGlow: 'rgba(240, 171, 252, 0.5)',
-    bg: '#0f172a',
-    bgAlt: '#1e293b',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.6)',
-    border: 'rgba(240, 171, 252, 0.3)',
-    glass: 'rgba(240, 171, 252, 0.05)',
-    cardStyle: 'border-fuchsia-500/30 bg-slate-900/80 backdrop-blur-xl',
-    animationStyle: 'animate-pulse',
-    accent: '#e879f9',
-    intensity: 'immersive'
-  },
-  santorini_breeze: {
-    label: 'Santorini Breeze',
-    category: 'travel',
-    primary: '#0ea5e9',
-    primaryLight: '#38bdf8',
-    primaryGlow: 'rgba(14, 165, 233, 0.3)',
-    bg: '#f0f9ff',
-    bgAlt: '#e0f2fe',
-    text: '#0c4a6e',
-    textMuted: '#0369a1',
-    border: '#bae6fd',
-    glass: 'rgba(240, 249, 255, 0.8)',
-    cardStyle: 'border-sky-200 bg-white shadow-md',
-    animationStyle: 'animate-none',
-    accent: '#0284c7',
-    intensity: 'soft'
-  },
-  amazon_roots: {
-    label: 'Amazon Roots',
-    category: 'travel',
-    primary: '#22c55e',
-    primaryLight: '#4ade80',
-    primaryGlow: 'rgba(34, 197, 94, 0.3)',
-    bg: '#052e16',
-    bgAlt: '#064e3b',
-    text: '#f0fdf4',
-    textMuted: '#86efac',
-    border: '#14532d',
-    glass: 'rgba(5, 46, 22, 0.6)',
-    cardStyle: 'border-green-900 bg-green-950 shadow-lg',
-    animationStyle: 'animate-float-slow',
-    accent: '#16a34a',
-    intensity: 'balanced'
-  }
+  glitch_reality: { label: 'Glitch Reality', category: 'experimental', primary: '#00FFFF', primaryLight: '#FF00FF', primaryGlow: 'rgba(0, 255, 255, 0.5)', bg: '#0A0A0C', bgAlt: '#050506', text: '#FFFFFF', textMuted: 'rgba(255, 255, 255, 0.6)', border: 'rgba(0, 255, 255, 0.5)', glass: 'rgba(10, 10, 12, 0.8)', cardStyle: 'hover:skew-x-2 border border-cyan-500 bg-black', animationStyle: 'animate-pulse-fast', accent: '#FF00FF' },
+  glassmorphism: { label: 'Glassmorphism', category: 'classic', primary: '#FFFFFF', primaryLight: '#FFFFFF', primaryGlow: 'rgba(255, 255, 255, 0.3)', bg: '#000000', bgAlt: '#050505', text: '#FFFFFF', textMuted: 'rgba(255, 255, 255, 0.7)', border: 'rgba(255, 255, 255, 0.2)', glass: 'rgba(255, 255, 255, 0.1)', cardStyle: 'backdrop-blur-3xl bg-white/5 border border-white/20', animationStyle: 'animate-float', accent: '#E0E0E0' },
+  neural_drift: { label: 'Neural Drift', category: 'experimental', primary: '#9D4EDD', primaryLight: '#C77DFF', primaryGlow: 'rgba(157, 78, 221, 0.5)', bg: '#10002B', bgAlt: '#240046', text: '#E0AAFF', textMuted: 'rgba(224, 170, 255, 0.6)', border: 'rgba(157, 78, 221, 0.3)', glass: 'rgba(16, 0, 43, 0.7)', cardStyle: 'rounded-[3rem] border border-purple-500/30 bg-[#10002B]/60', animationStyle: 'animate-pulse-slow', accent: '#5A189A' }
 };
 
 // --- Types ---
@@ -1505,10 +230,60 @@ interface FirebaseLetter {
 
 // --- Data ---
 const TIMELINE_DATA = [
-  { year: "O Início", title: "Primeiro Olhar", desc: "Aquele momento que mudou o ritmo de tudo.", details: "Foi quando percebi que o universo tinha planos maiores para nós.", icon: <Sparkles className="text-white" />, side: 'left' as const },
-  { year: "A Conexão", title: "Madrugadas", desc: "Conversas que pareciam não ter fim.", details: "Descobrimos que nossas almas falavam a mesma língua, mesmo no silêncio.", icon: <MessageCircle className="text-white" />, side: 'right' as const },
-  { year: "O Marco", title: "Primeiro Encontro", desc: "O frio na barriga inesquecível.", details: "A confirmação de que tudo o que sentíamos era real e palpável.", icon: <MapPin className="text-white" />, side: 'left' as const },
-  { year: "O Agora", title: "Nossa Sintonia", desc: "Cada dia que passa, a certeza só aumenta.", details: "Construindo nosso próprio castelo em meio ao caos do mundo.", icon: <Heart className="text-white" />, side: 'right' as const },
+  { 
+    year: "14 de Junho, 2023", 
+    title: "Primeiro Encontro", 
+    desc: "Aquele momento que mudou o ritmo de tudo.", 
+    details: "Foi quando percebi que o universo tinha planos maiores para nós. Nossos olhares se cruzaram e o tempo pareceu parar.", 
+    image: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=800", 
+    icon: <Sparkles className="text-white" />, 
+    side: 'left' as const,
+    music: "505 - Arctic Monkeys",
+    location: "Praça Central",
+    emotion: "Felicidade Pura",
+    weather: "Tarde Ensolarada",
+    hiddenMessage: "Eu estava tão nervoso naquele dia que quase derrubei o café, mas seu sorriso me acalmou instantaneamente."
+  },
+  { 
+    year: "12 de Agosto, 2023", 
+    title: "Nosso Primeiro Passeio", 
+    desc: "Conversas que pareciam não ter fim.", 
+    details: "Caminhamos sem rumo, descobrindo que nossas almas falavam a mesma língua, mesmo nos momentos de silêncio.", 
+    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800", 
+    icon: <MessageCircle className="text-white" />, 
+    side: 'right' as const,
+    music: "Yellow - Coldplay",
+    location: "Parque da Cidade",
+    emotion: "Conexão Profunda",
+    weather: "Fim de Tarde Dourado"
+  },
+  { 
+    year: "05 de Novembro, 2023", 
+    title: "A Primeira Foto", 
+    desc: "O registro de um sentimento.", 
+    details: "Estávamos rindo tanto que a foto saiu tremida, mas é a minha preferida. É a confirmação de que tudo o que sentíamos era real e palpável.", 
+    image: "https://images.unsplash.com/photo-1502602720212-49a05591f18d?w=800", 
+    icon: <MapPin className="text-white" />, 
+    side: 'left' as const,
+    music: "Perfect - Ed Sheeran",
+    location: "Mirante",
+    emotion: "Gratidão",
+    weather: "Noite Estrelada",
+    hiddenMessage: "Eu guardei essa foto na carteira desde aquele dia. Toda vez que olho para ela, lembro do motivo de sempre sorrir."
+  },
+  { 
+    year: "Hoje", 
+    title: "Nossa Sintonia", 
+    desc: "Cada dia que passa, a certeza só aumenta.", 
+    details: "Construindo nosso próprio universo juntos, em meio ao caos do mundo. E a jornada está apenas começando.", 
+    image: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=800", 
+    icon: <Heart className="text-white" />, 
+    side: 'right' as const,
+    music: "Lover - Taylor Swift",
+    location: "Nosso Lar",
+    emotion: "Amor Eterno",
+    weather: "Clima Bom",
+  },
 ];
 
 const GALLERY_DATA = [
@@ -2342,8 +1117,8 @@ const LoginPage = ({ onLogin, loading }: { onLogin: () => void, loading: boolean
     <div className="fixed inset-0 z-[100] flex bg-[var(--bg)] overflow-hidden items-center justify-center font-sans">
       {/* Background Noise & Lighting */}
       <div className="absolute inset-0 noise-overlay opacity-30 pointer-events-none" />
-      <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-[var(--primary)]/10 rounded-[100%] mix-blend-screen filter blur-[150px] pointer-events-none animate-pulse" style={{ animationDuration: '8s' }} />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-rose-500/10 rounded-[100%] mix-blend-screen filter blur-[150px] pointer-events-none" />
+      <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-[var(--primary)]/10 rounded-[100%] mix-blend-screen filter blur-[150px] pointer-events-none animate-pulse hidden md:block" style={{ animationDuration: '8s' }} />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-rose-500/10 rounded-[100%] mix-blend-screen filter blur-[150px] pointer-events-none hidden md:block" />
       
       {/* Aesthetic Background Typography */}
       <div className="absolute left-[10%] top-[20%] text-white/[0.02] font-editorial text-[20vw] leading-none select-none z-0 rotate-12 pointer-events-none italic">
@@ -2528,15 +1303,13 @@ const UserMenu = ({
   onEditProfile: () => void,
   onShowNotifications: () => void
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
   return (
     <div className="relative">
       {user ? (
         <motion.button 
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => onNavigate('perfil')}
           className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full pr-5 pl-1 py-1 transition-all group shadow-xl"
         >
           <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-[var(--primary)] transition-colors">
@@ -2557,98 +1330,6 @@ const UserMenu = ({
           <UserIcon size={14} /> Acessar Portal
         </button>
       )}
-
-      <AnimatePresence>
-        {isOpen && user && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[150]"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-md bg-[var(--bg)] border-l border-white/5 z-[200] flex flex-col overflow-hidden"
-            >
-              {/* Background Aesthetic */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,var(--primary-glow),transparent_60%)] opacity-20 pointer-events-none" />
-              
-              <div className="relative z-10 h-full w-full overflow-y-auto custom-scrollbar p-6 md:p-16 flex flex-col pb-24 md:pb-16">
-                <div className="flex justify-between items-center mb-10 md:mb-16 shrink-0">
-                  <div className="flex items-center gap-4">
-                     <div className="w-8 h-[1px] bg-[var(--primary)]" />
-                     <span className="text-[10px] font-mono uppercase tracking-[0.8em] text-[var(--primary)]">Sincronia</span>
-                  </div>
-                  <button 
-                    onClick={() => setIsOpen(false)}
-                    className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/10 flex items-center justify-center text-white/30 hover:text-white hover:border-white transition-all shadow-inner"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                <div className="flex flex-col items-center text-center pb-10 md:pb-16 border-b border-white/5 mb-8 md:mb-12 shrink-0">
-                  <div className="relative group mb-6 md:mb-8">
-                     <div className="w-24 h-24 md:w-28 md:h-28 rounded-[3rem] overflow-hidden border-2 border-white/10 shadow-4xl group-hover:border-[var(--primary)] transition-all duration-700 transform group-hover:rotate-6">
-                        <img src={user.photoURL || ''} alt={user.displayName || ''} className="w-full h-full object-cover scale-110 group-hover:scale-125 transition-transform duration-1000" />
-                     </div>
-                     <motion.div 
-                        animate={{ scale: [1, 1.2, 1] }}
-                        transition={{ duration: 4, repeat: Infinity }}
-                        className="absolute -bottom-2 -right-2 w-10 h-10 bg-[var(--primary)] rounded-2xl flex items-center justify-center text-white shadow-xl"
-                     >
-                        <Sparkles size={16} />
-                     </motion.div>
-                  </div>
-                  <h4 className="text-white font-editorial italic text-3xl md:text-5xl mb-4 leading-none tracking-tighter">{user.displayName}</h4>
-                  <p className="text-white/20 font-mono text-[9px] tracking-[0.6em] uppercase break-all">{user.email}</p>
-                </div>
-
-                <div className="space-y-3 shrink-0 flex-1">
-                  {[
-                    { icon: Palette, label: 'Perfil Cósmico', action: onEditProfile },
-                    { icon: Bell, label: 'Conexões', action: onShowNotifications, badge: true },
-                    { icon: Settings, label: 'Configurações', action: () => onNavigate('perfil') },
-                    { icon: ShieldCheck, label: 'Testar 404', action: () => onNavigate('404' as any) },
-                  ].map((item, idx) => (
-                    <motion.button 
-                      key={idx}
-                      whileHover={{ x: 10 }}
-                      onClick={() => { item.action?.(); setIsOpen(false); }}
-                      className="w-full flex items-center gap-6 md:gap-8 px-6 md:px-8 py-5 md:py-6 text-white/40 hover:text-white hover:bg-white/5 rounded-[2rem] md:rounded-[2.5rem] transition-all group relative border border-transparent hover:border-white/5"
-                    >
-                      <item.icon size={20} className="group-hover:text-[var(--primary)] transition-colors" />
-                      <span className="text-[10px] md:text-[11px] font-mono uppercase tracking-[0.3em] md:tracking-[0.4em] text-left flex-1 font-medium">{item.label}</span>
-                      {item.badge && (
-                        <span className="w-2 h-2 rounded-full bg-[var(--primary)] shadow-[0_0_10px_var(--primary-glow)]" />
-                      )}
-                      <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all text-[var(--primary)]" />
-                    </motion.button>
-                  ))}
-                </div>
-
-                <div className="pt-8 md:pt-12 mt-12 border-t border-white/5 shrink-0">
-                  <button 
-                    onClick={() => { onLogout(); setIsOpen(false); }}
-                    className="w-full relative group overflow-hidden rounded-[2rem] md:rounded-[2.5rem]"
-                  >
-                    <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-700 cubic-bezier(0.23, 1, 0.32, 1)" />
-                    <div className="relative flex items-center justify-center gap-4 md:gap-6 px-6 md:px-8 py-6 md:py-8 border border-white/10 text-white group-hover:text-black transition-colors duration-500">
-                      <LogOut size={20} />
-                      <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-[0.4em] md:tracking-[0.5em] font-bold">Desconectar Alma</span>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
@@ -2899,84 +1580,93 @@ const NotificationsDropdown = ({ notifications, onClose, onMarkAsRead }: { notif
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      initial={{ opacity: 0, y: -20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      className="fixed top-24 left-1/2 -translate-x-1/2 md:left-auto md:right-8 md:translate-x-0 z-[110] w-[calc(100vw-2rem)] md:w-96 glass-card rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[70vh]"
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+      className="absolute top-[3.5rem] right-0 z-[110] w-[calc(100vw-2rem)] md:w-[380px] flex flex-col font-sans origin-top-right"
     >
-      <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-        <div>
-          <h3 className="text-xl font-serif text-white leading-none">Notificações</h3>
-          <p className="text-[10px] text-white/20 font-mono uppercase tracking-widest mt-2">
-            {unreadCount} não {unreadCount === 1 ? 'lida' : 'lidas'}
-          </p>
-        </div>
-        <button onClick={onClose} className="text-white/20 hover:text-white transition-colors">
-          <X size={20} />
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-0 space-y-2">
-        {notifications.length === 0 ? (
-          <div className="py-20 text-center">
-            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-white/10">
-              <Bell size={24} />
-            </div>
-            <p className="text-white/30 font-serif italic text-lg">Nada por aqui ainda...</p>
+      <div className="bg-neutral-900/95 border border-white/10 backdrop-blur-3xl rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col relative before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/[0.05] before:to-transparent before:pointer-events-none">
+        
+        <div className="relative z-10 p-5 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+          <div>
+            <h3 className="text-[15px] font-medium tracking-tight text-white flex items-center gap-2">
+              <Bell size={16} className="text-[var(--primary)]" />
+              Notificações
+            </h3>
+            {unreadCount > 0 && (
+              <p className="text-[10px] font-mono text-[var(--primary)] uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse" />
+                {unreadCount} Novas interações
+              </p>
+            )}
           </div>
-        ) : (
-          notifications.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).map((n) => (
-            <motion.div 
-              key={n.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              onClick={() => onMarkAsRead(n.id)}
-              className={`p-6 rounded-[1.5rem] border transition-all cursor-pointer group relative overflow-hidden ${
-                n.read 
-                ? 'bg-white/[0.01] border-white/5 opacity-60' 
-                : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.05] hover:border-[var(--primary)]/30'
-              }`}
-            >
-              {!n.read && (
-                <div className="absolute top-6 right-6 w-2 h-2 bg-[var(--primary)] rounded-full shadow-[0_0_10px_var(--primary-glow)]" />
-              )}
-              <div className="flex gap-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
-                  n.type === 'photo' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
-                  n.type === 'letter' ? 'bg-[var(--primary)]/10 border-[var(--primary)]/20 text-[var(--primary)]' :
-                  n.type === 'game' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                  'bg-white/10 border-white/10 text-white'
-                }`}>
-                  {n.type === 'photo' ? <ImageIcon size={18} /> :
-                   n.type === 'letter' ? <MessageCircle size={18} /> :
-                   n.type === 'game' ? <Target size={18} /> :
-                   <Bell size={18} />}
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-white font-medium text-sm leading-tight mb-1">{n.title}</h4>
-                  <p className="text-white/40 text-xs leading-relaxed line-clamp-2">{n.message}</p>
-                  <p className="text-[9px] text-white/20 font-mono mt-3 uppercase tracking-widest">
-                    {n.createdAt?.toDate ? n.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Agora'}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          ))
-        )}
-      </div>
-      
-      {notifications.length > 0 && (
-        <div className="p-4 border-t border-white/5 bg-white/[0.01]">
-          <button 
-            className="w-full py-4 text-[10px] text-white/30 hover:text-white font-mono uppercase tracking-[0.3em] transition-all"
-            onClick={() => {
-              notifications.forEach(n => !n.read && onMarkAsRead(n.id));
-            }}
-          >
-            Marcar todas como lidas
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/20 transition-all">
+            <X size={14} />
           </button>
         </div>
-      )}
+
+        <div className="flex-1 overflow-y-auto max-h-[50vh] custom-scrollbar bg-black/20 p-2 relative z-10">
+          {notifications.length === 0 ? (
+            <div className="py-12 flex flex-col items-center justify-center text-center text-white/30">
+              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                <CheckCircle2 size={20} className="opacity-40" />
+              </div>
+              <p className="font-medium text-sm text-white/50">Você está em dia</p>
+              <p className="text-xs mt-1 text-white/30">Nenhuma notificação no momento</p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {notifications.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).map((n) => (
+                <div 
+                  key={n.id}
+                  onClick={() => onMarkAsRead(n.id)}
+                  className={`group relative p-3.5 rounded-2xl transition-all cursor-pointer flex gap-4 ${
+                    n.read 
+                    ? 'hover:bg-white/5 text-white/50' 
+                    : 'bg-white/5 text-white hover:bg-white/10 border border-white/5'
+                  }`}
+                >
+                  {!n.read && (
+                    <div className="absolute top-1/2 -translate-y-1/2 left-0 w-1 h-6 bg-[var(--primary)] shadow-[0_0_10px_var(--primary-glow)] rounded-r-full" />
+                  )}
+                  <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                    n.read ? 'bg-white/5 text-white/30' : 'bg-[var(--primary)]/10 text-[var(--primary)]'
+                  }`}>
+                    {n.type === 'photo' ? <ImageIcon size={16} /> :
+                     n.type === 'letter' ? <MessageCircle size={16} /> :
+                     n.type === 'game' ? <Target size={16} /> :
+                     <Bell size={16} />}
+                  </div>
+                  <div className="flex-1 min-w-0 py-0.5">
+                    <p className={`text-sm mb-0.5 truncate ${!n.read ? 'font-medium text-white' : 'font-normal text-white/70'}`}>{n.title}</p>
+                    <p className="text-xs opacity-60 line-clamp-2 leading-relaxed">{n.message}</p>
+                    {n.createdAt && (
+                      <p className="text-[10px] opacity-40 mt-2.5 flex items-center gap-1.5">
+                        <Clock size={10} />
+                        {n.createdAt?.toDate ? n.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Agora'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {notifications.length > 0 && (
+          <div className="relative z-10 p-3 border-t border-white/10 bg-white/[0.02]">
+            <button 
+              className="w-full py-3 rounded-xl text-xs text-white/70 hover:text-white font-medium transition-all hover:bg-white/10 flex items-center justify-center gap-2"
+              onClick={() => {
+                notifications.forEach(n => !n.read && onMarkAsRead(n.id));
+              }}
+            >
+              <CheckCircle2 size={14} /> Marcar todas como lidas
+            </button>
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 };
@@ -2986,19 +1676,44 @@ import { useMusic } from './contexts/MusicContext';
 function AppInternal() {
   const { isPlaying: isGlobalMusicPlaying } = useMusic();
   const [view, setViewInternal] = useState<View>('login');
+  const [showWizard, setShowWizard] = useState(false);
 
-  
-  const setView = useCallback((newView: View) => {
+  const [invitedProposal, setInvitedProposal] = useState<SetupData | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const inviteId = params.get('invite');
+    if (inviteId) {
+      import('./lib/firebase').then(({ db }) => {
+        import('firebase/firestore').then(({ doc, getDoc }) => {
+          getDoc(doc(db, 'proposals', inviteId)).then((snap) => {
+            if (snap.exists()) {
+              const data = snap.data();
+              if (data.settings) {
+                setInvitedProposal(data.settings as SetupData);
+                setThemeMode(data.settings.theme || 'luxury_classic');
+                setView('custom_proposal' as any);
+              }
+            }
+          });
+        });
+      });
+    }
+  }, []);
+
+  const setView = useCallback((newView: View | 'custom_proposal') => {
     audioManager.playSound('click');
     setViewInternal(newView);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<any>(null);
+  const [universeData, setUniverseData] = useState<any>(null);
+  const [isUniverseLoading, setIsUniverseLoading] = useState(true);
   const [partnerUid, setPartnerUid] = useState<string | null>(null);
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('themeMode');
-    return (saved && THEMES[saved as ThemeMode]) ? (saved as ThemeMode) : 'luxury';
+    return (saved && THEMES[saved as ThemeMode]) ? (saved as ThemeMode) : 'luxury_classic';
   });
   const [layoutMode, setLayoutMode] = useState<LayoutType>(() => {
     const saved = localStorage.getItem('layoutMode');
@@ -3156,6 +1871,8 @@ function AppInternal() {
 
   useEffect(() => {
     localStorage.setItem('layoutMode', layoutMode);
+    document.documentElement.setAttribute('data-layout', layoutMode);
+    document.body.setAttribute('data-layout', layoutMode);
     window.dispatchEvent(new CustomEvent('layoutChanged', { detail: layoutMode }));
   }, [layoutMode]);
 
@@ -3205,7 +1922,19 @@ function AppInternal() {
 
   useEffect(() => {
     const root = document.documentElement;
-    const theme = THEMES[themeMode] || THEMES.luxury;
+    let theme = THEMES[themeMode] || THEMES.luxury_classic;
+    
+    // Check if we have Custom/AI Theme Config overriding the base preset
+    const themeConfig = universeData?.settings?.themeConfig;
+    let activeDataTheme = themeMode;
+    
+    if (themeConfig && typeof themeConfig === 'object') {
+      if (themeConfig.type === 'preset' && themeConfig.presetKey) {
+         activeDataTheme = themeConfig.presetKey as ThemeMode;
+         theme = THEMES[activeDataTheme] || THEMES.luxury_classic;
+      }
+    }
+    
     root.style.setProperty('--primary', theme.primary);
     root.style.setProperty('--primary-gradient', theme.primaryGradient || theme.primary);
     root.style.setProperty('--primary-light', theme.primaryLight);
@@ -3218,8 +1947,25 @@ function AppInternal() {
     root.style.setProperty('--glass', theme.glass);
     root.style.setProperty('--accent', theme.accent);
     
+    // Override with custom colors if custom or AI
+    if (themeConfig && (themeConfig.type === 'custom' || themeConfig.type === 'ai')) {
+      const colors = themeConfig.customColors;
+      if (colors?.primary) root.style.setProperty('--primary', colors.primary);
+      if (colors?.bg) root.style.setProperty('--bg', colors.bg);
+      if (colors?.bgAlt) root.style.setProperty('--bg-alt', colors.bgAlt);
+      if (colors?.text) root.style.setProperty('--text', colors.text);
+    }
+    
+    // Override Typography font style
+    if (themeConfig?.customStyle?.fontStyle) {
+      root.style.setProperty('--theme-font-heading', `var(--font-${themeConfig.customStyle.fontStyle})`);
+    } else {
+      root.style.removeProperty('--theme-font-heading');
+    }
+
     // Applying unique card styles as a data attribute can be helpful for global CSS targeting
-    root.setAttribute('data-theme', themeMode);
+    root.setAttribute('data-theme', activeDataTheme);
+    document.body.setAttribute('data-theme', activeDataTheme);
 
     // Auto Sync Audio
     const audioSettings = audioManager.getSettings();
@@ -3323,6 +2069,11 @@ function AppInternal() {
       }
     });
 
+    const unsubUniverse = subscribeToDocument('universes', user.uid, (data) => {
+      setUniverseData(data);
+      setIsUniverseLoading(false);
+    });
+
     const unsubAlbums = subscribeToCollection('albums', (albumList) => {
       // Merge with initial ALBUMS_DATA if they don't exist yet, or just use Firestore
       // For now, let's treat Firestore as the source of truth for dynamic albums
@@ -3340,6 +2091,7 @@ function AppInternal() {
       unsubGallery();
       unsubSecrets();
       unsubUser();
+      unsubUniverse();
       unsubAlbums();
       unsubNotifications();
     };
@@ -3700,74 +2452,60 @@ Isso permitirá que o login funcione neste ambiente.`);
         style={{ scaleX: progressScaleX }}
       />
 
-      <AnimatePresence>
-        {!initialLoading && !['landing', 'login', 'pedido', 'sucesso'].includes(view) && (
-          <SidebarResolver 
+      <FooterLayoutWrapper 
+        footerContent={!['login', 'pedido', 'sucesso', 'galeria'].includes(view) ? <Footer setView={setView} /> : null}
+      >
+        <AnimatePresence>
+        {!initialLoading && !['landing', 'login', 'pedido', 'sucesso', 'galeria'].includes(view) && (
+          <Navbar 
             currentView={view} 
             onNavigate={setView}
-            layoutMode={layoutMode}
-            themeMode={themeMode}
-            THEMES={THEMES} 
-          />
+          >
+            {/* Right: Actions Cluster */}
+            <div className="flex items-center gap-4 pointer-events-auto">
+              {/* Notification Bell */}
+              <div className="relative">
+                <NotificationButton 
+                  onClick={() => setIsNotificationOpen(!isNotificationOpen)} 
+                  hasUnread={notifications.some(n => !n.read)}
+                />
+
+                <AnimatePresence>
+                  {isNotificationOpen && (
+                    <NotificationsDropdown 
+                      notifications={notifications} 
+                      onClose={() => setIsNotificationOpen(false)} 
+                      onMarkAsRead={markNotificationAsRead}
+                    />
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Builder Toggle removed per request */}
+
+              {/* User Menu Trigger */}
+              <UserMenu 
+                user={user} 
+                onLogin={handleLogin} 
+                onLogout={handleLogout} 
+                onNavigate={setView}
+                onShowNotifications={() => setIsNotificationOpen(true)}
+                onEditProfile={() => {
+                  setEditingName(user?.displayName || '');
+                  setEditingPhoto(user?.photoURL || '');
+                  setEditingBio((user as any)?.bio || '');
+                  setIsEditingProfileQuick(true);
+                }}
+              />
+            </div>
+          </Navbar>
         )}
       </AnimatePresence>
 
-      <main className={`relative w-full flex-1 flex flex-col items-center min-h-screen ${(!['landing', 'login', 'pedido', 'sucesso'].includes(view) && !initialLoading) ? 'md:pl-24 lg:pl-32 pb-24 md:pb-0' : ''}`}>
-
-      {/* Top Navigation Controls bar */}
-      {!initialLoading && !['landing', 'login', 'pedido', 'sucesso'].includes(view) && (
-        <div className="fixed top-6 left-6 right-6 z-[100] flex justify-between items-center pointer-events-none">
-
-          {/* Right: Actions Cluster */}
-          <div className="flex items-center gap-4 pointer-events-auto">
-            {/* Notification Bell */}
-            <div className="relative">
-              <motion.button 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                className="glass-card p-4 rounded-2xl border border-white/10 hover:bg-white/10 transition-all group shadow-2xl relative"
-              >
-                <Bell size={24} className={`text-white transition-transform ${notifications.some(n => !n.read) ? 'animate-bounce' : 'group-hover:scale-110'}`} />
-                {notifications.some(n => !n.read) && (
-                  <span className="absolute top-3 right-3 w-3 h-3 bg-rose-500 rounded-full border-2 border-[var(--bg)] shadow-[0_0_10px_rgba(244,63,94,0.5)]" />
-                )}
-              </motion.button>
-
-              <AnimatePresence>
-                {isNotificationOpen && (
-                  <NotificationsDropdown 
-                    notifications={notifications} 
-                    onClose={() => setIsNotificationOpen(false)} 
-                    onMarkAsRead={markNotificationAsRead}
-                  />
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* User Menu Trigger */}
-            <UserMenu 
-              user={user} 
-              onLogin={handleLogin} 
-              onLogout={handleLogout} 
-              onNavigate={setView}
-              onShowNotifications={() => setIsNotificationOpen(true)}
-              onEditProfile={() => {
-                setEditingName(user?.displayName || '');
-                setEditingPhoto(user?.photoURL || '');
-                setEditingBio((user as any)?.bio || '');
-                setIsEditingProfileQuick(true);
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-
-
+      <main className={`relative w-full flex-1 flex flex-col items-center min-h-screen ${(!['landing', 'login', 'pedido', 'sucesso'].includes(view) && !initialLoading) ? 'pt-16 md:pt-20 pb-24 md:pb-0' : ''}`}>
 
       {/* Theme System Background */}
-      <ThemeBackground themeMode={themeMode} THEMES={THEMES} />
+      <ThemeBackground themeMode={themeMode} THEMES={THEMES} universeData={universeData} />
 
       <AnimatePresence mode="wait">
         {initialLoading ? (
@@ -3822,12 +2560,17 @@ Isso permitirá que o login funcione neste ambiente.`);
           </motion.div>
         ) : view === 'login' ? (
           <LoginPage onLogin={handleLogin} loading={loading} />
+        ) : view === ('custom_proposal' as any) && invitedProposal ? (
+          <CustomProposalView data={invitedProposal} onAccept={() => setView('sucesso')} />
+        ) : view === 'sucesso' ? (
+          <SuccessView setView={setView} />
         ) : view === 'home' ? (
           <HomeLayoutResolver 
             themeMode={themeMode}
             layoutMode={layoutMode}
             experienceMode={experienceMode}
             THEMES={THEMES}
+            universeData={universeData}
             user={user} 
             setView={setView} 
             GALLERY_DATA={gallery} 
@@ -4504,7 +3247,7 @@ Isso permitirá que o login funcione neste ambiente.`);
              className="relative z-10 w-full max-w-7xl px-8 py-24 text-center flex flex-col items-center justify-center min-h-[90vh] mx-auto"
           >
              {/* Background Decoration */}
-             <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+             <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-rose-500/5 blur-[120px] rounded-full animate-pulse" />
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay" />
              </div>
@@ -4531,7 +3274,7 @@ Isso permitirá que o login funcione neste ambiente.`);
                 transition={{ type: "spring", damping: 15 }}
                 className="mb-48 relative"
              >
-                <div className="absolute inset-0 bg-rose-500 blur-[180px] opacity-30 animate-pulse scale-150" />
+                <div className="absolute inset-0 bg-rose-500 blur-[180px] opacity-30 animate-pulse scale-150 hidden md:block" />
                 
                 {/* Rotating Text Ring */}
                 <motion.div 
@@ -4651,8 +3394,6 @@ Isso permitirá que o login funcione neste ambiente.`);
             updateUserSettings={updateUserSettings}
             setView={setView}
           />
-        ) : view === 'sucesso' ? (
-          <SuccessView setView={setView} />
         ) : (
           <NotFoundView setView={setView} />
         )}
@@ -4784,15 +3525,20 @@ Isso permitirá que o login funcione neste ambiente.`);
       </AnimatePresence>
 
       </main>
+      </FooterLayoutWrapper>
 
-      {/* Conditionally render the new Footer */}
-      {!['login', 'pedido', 'sucesso'].includes(view) && <Footer setView={setView} />}
-      
       {/* Cookie Consent System */}
       <CookieConsent />
 
       {/* Global Music Player that persists across views */}
       <GlobalMusicPlayer themeMode={themeMode} />
+      
+      {/* SaaS Builder Overlay */}
+      <AnimatePresence>
+        {showWizard && (
+          <ProposalWizard onClose={() => setShowWizard(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
