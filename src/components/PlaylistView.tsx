@@ -271,7 +271,7 @@ export const PlaylistView = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.3 } }}
-            className="fixed inset-0 z-50 flex items-center justify-center"
+            className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-8 overflow-hidden"
           >
              {/* Background Layer: Blurred Photo Concept representing the memory */}
              <motion.div 
@@ -288,7 +288,7 @@ export const PlaylistView = ({
                  setSelectedTrackId(null);
                  setShowLetter(false);
                }}
-               className="absolute top-6 right-6 md:top-12 md:right-12 w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/50 hover:bg-white/10 hover:text-white transition-colors z-50 bg-black/50 backdrop-blur-md"
+               className="absolute top-6 right-6 md:top-12 md:right-12 w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/50 hover:bg-white/10 hover:text-white transition-colors z-[60] bg-black/50 backdrop-blur-md"
              >
                <X size={20} />
              </button>
@@ -296,13 +296,13 @@ export const PlaylistView = ({
              {/* Expanded Card Structure */}
              <motion.div 
                layoutId={`card-container-${selectedTrack.id}`}
-               className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 md:gap-12 lg:gap-24 relative p-6 md:p-12 h-full md:h-auto overflow-y-auto md:overflow-visible hide-scrollbar pt-24 md:pt-12"
+               className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 md:gap-12 lg:gap-24 relative p-6 md:p-12 h-[100dvh] md:h-[80vh] md:max-h-[850px] overflow-y-auto hide-scrollbar pt-24 md:pt-12 items-start rounded-none md:rounded-[2.5rem] bg-[#050505] md:bg-[#0a0a0a]/80 md:backdrop-blur-3xl md:border md:border-white/10 md:shadow-[0_40px_100px_-20px_rgba(0,0,0,1)]"
              >
                {/* Left: Huge Vinyl / Cover art representation */}
-               <div className="w-full md:w-1/2 flex items-center justify-center top-0 md:sticky md:py-0 shrink-0">
+               <div className="w-full md:w-1/2 flex items-center justify-center top-0 md:sticky md:h-[calc(80vh-6rem)] md:max-h-[calc(850px-6rem)] shrink-0 z-20">
                    <motion.div 
                       layoutId={`vinyl-sleeve-${selectedTrack.id}`}
-                      className="w-full max-w-[300px] md:max-w-[400px] aspect-square relative rounded-xl border border-white/10 shadow-[0_30px_100px_-20px_rgba(0,0,0,1)] bg-[#0a0a0a] overflow-hidden flex-shrink-0 flex items-center justify-center"
+                      className="w-full max-w-[300px] md:max-w-[400px] xl:max-w-[450px] aspect-square relative rounded-xl border border-white/10 shadow-[0_30px_100px_-20px_rgba(0,0,0,1)] bg-[#0a0a0a] overflow-hidden flex-shrink-0 flex items-center justify-center"
                    >
                       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[var(--primary)]/20 via-transparent to-transparent z-10" />
                       
@@ -345,7 +345,7 @@ export const PlaylistView = ({
                </div>
 
                {/* Right: The Meaning & Info */}
-               <div className="w-full md:w-1/2 flex flex-col justify-center text-left relative pb-32 md:pb-0 shrink-0 md:shrink">
+               <div className="w-full md:w-1/2 flex flex-col justify-center text-left relative pb-32 md:pb-0 shrink-0 md:shrink md:py-8 md:min-h-[calc(80vh-6rem)] md:max-h-max">
                   <AnimatePresence mode="wait">
                     {!showLetter ? (
                       <motion.div

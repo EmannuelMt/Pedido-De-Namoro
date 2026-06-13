@@ -131,10 +131,10 @@ export const saveUserProfile = async (user: any) => {
 export const updateUserSettings = async (userId: string, updates: any) => {
   try {
     const userRef = doc(db, 'users', userId);
-    await updateDoc(userRef, {
+    await setDoc(userRef, {
       ...updates,
       updatedAt: serverTimestamp()
-    });
+    }, { merge: true });
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, `users/${userId}`);
   }

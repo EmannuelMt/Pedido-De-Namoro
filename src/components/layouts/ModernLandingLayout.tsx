@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './ModernLandingLayout.css';
-import { PlayCircle, Image as ImageIcon, Music, Heart, MessageSquare, Gamepad2, Star, Settings, ArrowRight, Sparkles, Compass, Fingerprint, ChevronDown } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'motion/react';
+import { PlayCircle, Image as ImageIcon, Music, Heart, MessageSquare, Gamepad2, Star, Settings, ArrowRight, Sparkles, Compass, Fingerprint, ChevronDown, Menu, X } from 'lucide-react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
 
 export const ModernLandingLayout = ({ setView, universeData, PLAYLIST_DATA, GALLERY_DATA, ALBUMS_DATA, SHARED_GAMES }: any) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -34,7 +34,7 @@ export const ModernLandingLayout = ({ setView, universeData, PLAYLIST_DATA, GALL
   return (
     <div ref={containerRef} className="modern-landing-wrapper bg-[#0a0a0a] text-[#f7f7f5] font-sans relative overflow-x-hidden selection:bg-rose-500/30">
       
-      {/* Immersive Background Ambient */}
+      {/* Immersive Background Ambient for dark sections */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-rose-500/5 blur-[150px]" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-500/5 blur-[150px]" />
@@ -43,59 +43,38 @@ export const ModernLandingLayout = ({ setView, universeData, PLAYLIST_DATA, GALL
       </div>
 
       <motion.section 
-        style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
-        className="relative z-10 flex flex-col items-center justify-center min-h-[100svh] px-4"
+        style={{ opacity: heroOpacity, scale: heroScale, y: heroY, fontFamily: "'Poppins', sans-serif" }}
+        className="relative z-10 pt-32 pb-32 md:pt-44 md:pb-44 bg-[url('https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/hero/bg-with-grid.png')] bg-white bg-cover bg-center bg-no-repeat text-slate-800 text-sm shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-[3rem] sm:rounded-b-[5rem] overflow-hidden"
       >
-        <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="flex flex-col items-center text-center w-full max-w-5xl">
-          <motion.div variants={fadeUp} className="mb-8 flex items-center gap-3 px-5 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[10px] sm:text-xs uppercase tracking-[0.25em] text-white/60 shadow-[0_0_30px_rgba(255,255,255,0.02)]">
-            <Sparkles size={14} className="text-rose-400" /> 
-            <span>Conexão Digital Estabelecida</span>
-          </motion.div>
-          
-          <motion.h1 variants={fadeUp} className="relative mb-6">
-            <span className="sr-only">Nosso Amor</span>
-            <div className="text-[12vw] md:text-[8vw] font-bold leading-none tracking-tighter flex flex-col items-center relative z-10">
-              <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70">Nosso</span>
-              <span className="font-serif italic text-rose-200/90 ml-12 md:ml-24 mt-[-2%]">Amor</span>
+        <div className="flex flex-col-reverse gap-10 md:flex-row px-4 md:px-16 lg:px-24 xl:px-32 mt-12 md:mt-24 items-center"> 
+            <div className="max-md:text-center flex-1">
+                <h5 className="text-4xl md:text-5xl lg:text-6xl/[76px] font-semibold max-w-xl bg-gradient-to-br from-slate-900 via-slate-800 to-[#6D8FE4] text-transparent bg-clip-text">
+                    Construindo momentos inesquecíveis juntos
+                </h5>
+
+                <p className="text-sm md:text-base max-w-lg mx-auto md:mx-0 mt-6 text-slate-600 leading-relaxed">
+                    Uma plataforma exclusiva para documentar, celebrar e eternizar nossa história. Cada clique é uma nova lembrança sendo revivida com amor e carinho.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 mt-8">
+                    <button onClick={() => setView('historia')} className="px-8 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium active:scale-95 transition-all shadow-xl shadow-indigo-600/30 w-full sm:w-auto" type="button">
+                        Nossa História
+                    </button>
+                    <button onClick={() => setView('galeria')} className="px-6 py-3.5 rounded-xl bg-white text-slate-700 border border-slate-200 flex justify-center items-center gap-2 hover:bg-slate-50 hover:border-indigo-200 active:scale-95 transition-all font-medium shadow-sm w-full sm:w-auto" type="button">
+                        <Sparkles size={18} className="text-indigo-500" />
+                        <span>Ver Álbuns</span>
+                    </button>
+                </div>
             </div>
-            {/* Background glowing text */}
-            <div className="absolute top-0 left-0 w-full h-full text-[12vw] md:text-[8vw] font-bold leading-none tracking-tighter flex flex-col items-center blur-2xl opacity-30 pointer-events-none select-none">
-              <span className="text-white">Nosso</span>
-              <span className="font-serif italic text-rose-500 ml-12 md:ml-24 mt-[-2%]">Amor</span>
+            <div className="w-full md:w-1/2 flex justify-center lg:justify-end">
+                <div className="relative w-full max-w-md aspect-[4/5] sm:aspect-square overflow-hidden rounded-[2rem] shadow-2xl rotate-2 hover:rotate-1 transition-all duration-700">
+                  <img className="absolute inset-0 w-full h-full object-cover" src={universeData?.settings?.gallery?.[4] || universeData?.settings?.gallery?.[0] || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?q=80&w=1200"} alt="Hero" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+                </div>
             </div>
-          </motion.h1>
-
-          <motion.p variants={fadeUp} className="font-light text-xl md:text-2xl opacity-70 leading-relaxed max-w-2xl mt-4">
-              Uma plataforma exclusiva para documentar, celebrar e eternizar nossa história.
-          </motion.p>
-
-          <motion.div variants={fadeUp} className="mt-16 flex flex-col sm:flex-row items-center gap-6 w-full sm:w-auto">
-            <button onClick={() => setView('historia')} className="group relative px-8 py-4 bg-white text-black rounded-full font-medium overflow-hidden w-full sm:w-auto shadow-[0_0_40px_rgba(255,255,255,0.15)] hover:shadow-[0_0_60px_rgba(255,255,255,0.25)] transition-all duration-500">
-              <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-rose-100 to-indigo-100 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative flex items-center justify-center gap-3">
-                <Heart size={18} className="text-rose-500 fill-rose-500 group-hover:scale-110 transition-transform duration-500" /> 
-                <span>Explorar Jornada</span>
-              </div>
-            </button>
-            <button onClick={() => setView('pedido')} className="group px-8 py-4 rounded-full border border-white/20 hover:bg-white/5 hover:border-white/40 transition-all duration-500 flex items-center justify-center gap-3 w-full sm:w-auto">
-              <Star size={18} className="text-indigo-300 group-hover:rotate-180 transition-transform duration-700" /> 
-              <span>Surpresa Especial</span>
-            </button>
-          </motion.div>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5, duration: 1 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 opacity-50"
-        >
-          <span className="text-[10px] uppercase tracking-widest font-mono">Descubra</span>
-          <div className="w-px h-12 bg-gradient-to-b from-white to-transparent" />
-        </motion.div>
+        </div>
       </motion.section>
 
-      <section className="relative z-10 pb-32">
+      <section className="relative z-10 pb-32 pt-16">
         <motion.div 
           initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-150px" }} variants={fadeUp}
           className="max-w-[90vw] md:max-w-6xl mx-auto rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_20px_80px_rgba(0,0,0,0.6)] relative aspect-[16/9] md:aspect-[21/9] flex items-center justify-center bg-black group cursor-pointer" 

@@ -1,6 +1,6 @@
 {
-  "name": "You Pedido",
+  "name": "ConnectionEstablished",
   "description": "Um projeto romântico interativo e premium: uma jornada digital através da nossa história, memórias e futuro.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

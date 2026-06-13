@@ -125,7 +125,11 @@ service cloud.firestore {
 
     function isValidGalleryPhoto(data) {
       return data.keys().hasAll(['url', 'authorId', 'createdAt']) &&
-             data.url is string && data.url.size() <= 500 &&
+             data.url is string && data.url.size() <= 1000000 &&
+             (!data.keys().hasAny(['title']) || (data.title is string && data.title.size() <= 200)) &&
+             (!data.keys().hasAny(['caption']) || (data.caption is string && data.caption.size() <= 2000)) &&
+             (!data.keys().hasAny(['category']) || (data.category is string && data.category.size() <= 100)) &&
+             (!data.keys().hasAny(['author']) || (data.author is string && data.author.size() <= 100)) &&
              data.authorId == request.auth.uid &&
              (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
     }

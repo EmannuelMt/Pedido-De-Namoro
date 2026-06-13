@@ -333,14 +333,48 @@ export const GalleryView = ({
       {/* 3D Canvas */}
       <div id="canvas-container" ref={containerRef}></div>
       
+      {/* Cinematic/Camera Overlay */}
+      <div className="fixed inset-0 pointer-events-none z-[45] mix-blend-overlay opacity-30">
+        <div className="absolute top-0 bottom-0 left-8 border-l border-black/10" />
+        <div className="absolute top-0 bottom-0 right-8 border-r border-black/10" />
+        <div className="absolute top-8 left-0 right-0 border-t border-black/10" />
+        <div className="absolute bottom-8 left-0 right-0 border-b border-black/10" />
+        
+        {/* Camera corners */}
+        <div className="absolute top-12 left-12 w-8 h-8 border-t-2 border-l-2 border-black/80" />
+        <div className="absolute top-12 right-12 w-8 h-8 border-t-2 border-r-2 border-black/80" />
+        <div className="absolute bottom-12 left-12 w-8 h-8 border-b-2 border-l-2 border-black/80" />
+        <div className="absolute bottom-12 right-12 w-8 h-8 border-b-2 border-r-2 border-black/80" />
+        
+        {/* Crosshair */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center opacity-20">
+           <div className="w-12 h-[1px] bg-black absolute" />
+           <div className="h-12 w-[1px] bg-black absolute" />
+           <div className="w-4 h-4 rounded-full border border-black absolute" />
+        </div>
+      </div>
+
+      <div className="fixed bottom-10 left-12 z-[50] pointer-events-none font-mono text-[10px] tracking-[0.3em] uppercase text-black/40 rotate-180" style={{ writingMode: 'vertical-rl' }}>
+         REC—{new Date().getFullYear()} // MEMORY_BANK
+      </div>
+
+      <div className="fixed top-12 right-16 z-[50] pointer-events-none font-mono text-[9px] tracking-widest text-black/50 text-right">
+         <div className="flex items-center gap-2 justify-end mb-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            <span className="opacity-70">LIVE</span>
+         </div>
+         <p className="opacity-50">ARCHIVE.SYS v2.0</p>
+         <p className="opacity-50">LAT: {activeIndex.toString().padStart(3, '0')}</p>
+      </div>
+
       {/* Top Navbar overlapping the 3D gallery somewhat (or just custom floating buttons) */}
-      <div className="fixed top-8 left-8 right-8 flex justify-between items-center z-[50] pointer-events-auto">
+      <div className="fixed top-12 left-12 z-[50] pointer-events-auto">
           {/* Back button */}
           <button 
             onClick={() => onNavigate('home')}
-            className="w-12 h-12 bg-white/50 backdrop-blur-md rounded-full flex items-center justify-center text-[#111] hover:bg-black hover:text-white transition-all shadow-md group border border-black/10"
+            className="w-12 h-12 bg-white/60 backdrop-blur-xl rounded-full flex items-center justify-center text-[#111] hover:bg-black hover:text-[#f7f7f5] transition-all duration-300 shadow-xl group border border-black/10 hover:border-transparent"
           >
-             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+             <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
           </button>
       </div>
 
@@ -348,13 +382,19 @@ export const GalleryView = ({
       <div className="fixed bottom-12 right-12 z-[50] pointer-events-auto">
           <button 
             onClick={() => setIsAdding(true)}
-            className="w-16 h-16 bg-[#111] hover:bg-[#333] text-[#f7f7f5] hover:scale-105 active:scale-95 rounded-full flex items-center justify-center transition-all shadow-[0_10px_40px_rgba(0,0,0,0.3)] border border-white/5 group"
+            className="w-14 h-14 bg-[#111] hover:bg-black text-[#f7f7f5] hover:scale-110 active:scale-95 rounded-full flex items-center justify-center transition-all duration-500 shadow-[0_10px_40px_rgba(0,0,0,0.3)] border border-white/10 group overflow-hidden"
           >
-             <Plus size={24} className="group-hover:rotate-90 transition-transform" />
+             <div className="absolute inset-0 bg-white/10 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500 rounded-full" />
+             <Plus size={22} className="group-hover:rotate-180 transition-transform duration-700 relative z-10" />
           </button>
       </div>
 
-      <div className="gallery-logo">Nossos<br/>Momentos</div>
+      <div className="gallery-logo">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }}>
+          Nossos<br/>
+          <span className="italic font-light">Momentos</span>
+        </motion.div>
+      </div>
 
       {/* UI Overlay */}
       <div id="ui-layer">
@@ -364,29 +404,43 @@ export const GalleryView = ({
                id={`slide-${i}`}
                className={`slide-content ${activeIndex === i ? 'active' : ''}`}
              >
-                <span className="catalogue-number">{(i + 1).toString().padStart(2, '0')} / {moment.category || 'Collection'}</span>
+                <div className="overflow-hidden mb-4">
+                   <motion.div 
+                     initial={{ x: '-100%' }}
+                     whileInView={{ x: '0%' }}
+                     transition={{ duration: 0.8, ease: "circOut" }}
+                     className="catalogue-number inline-block border-b-2 border-black/80 pb-1"
+                   >
+                       C—{(i + 1).toString().padStart(2, '0')} // {moment.category || 'Collection'}
+                   </motion.div>
+                </div>
                 
                 {/* Splitting title in two if there is a space for dramatic effect, or just replacing spaces with breaks */}
-                <h1 dangerouslySetInnerHTML={{ __html: (moment.title || '').replace(' ', '<br/>') }} />
+                <h1 dangerouslySetInnerHTML={{ __html: (moment.title || '').replace(' ', '<br/>') }} className="tracking-tight" />
 
-                <div className="gallery-description">
+                <div className="gallery-description bg-white/40 backdrop-blur-sm p-5 border-l-2 border-black/20 rounded-r-2xl shadow-sm">
                     {moment.caption || 'Sem descrição.'}
                 </div>
                 <div className="meta-grid">
-                    <span className="meta-label">Autor</span> <span className="meta-value">{moment.author || 'Desconhecido'}</span>
-                    <span className="meta-label">Ano</span> <span className="meta-value">{new Date(moment.createdAt || Date.now()).getFullYear()}</span>
+                    <span className="meta-label flex items-center gap-2"><UserIcon size={12}/> Autor</span> 
+                    <span className="meta-value font-medium">{moment.author || 'Desconhecido'}</span>
+                    
+                    <span className="meta-label flex items-center gap-2"><Camera size={12}/> Ano</span> 
+                    <span className="meta-value font-mono text-sm">{new Date(moment.createdAt || Date.now()).getFullYear()}</span>
+                    
                     <span className="meta-label">Ação</span> 
                     <span className="meta-value">
                         {onDeleteMoment && (
                             <button 
-                              className="text-red-600 hover:text-red-800 flex items-center gap-2 text-sm mt-1"
+                              className="text-red-900/60 hover:text-red-600 flex items-center gap-2 text-xs font-mono uppercase tracking-widest mt-1 group transition-colors"
                               onClick={() => {
                                   if (window.confirm('Tem certeza que deseja apagar essa lembrança?')) {
                                       onDeleteMoment(moment.id);
                                   }
                               }}
                             >
-                                <Trash2 size={16} /> Apagar
+                                <Trash2 size={14} className="group-hover:scale-110 transition-transform" /> 
+                                <span className="group-hover:underline decoration-red-300 underline-offset-4">Apagar</span>
                             </button>
                         )}
                     </span>
@@ -395,7 +449,10 @@ export const GalleryView = ({
           ))}
       </div>
 
-      <div className="scroll-hint">Deslize para explorar</div>
+      <div className="scroll-hint group flex flex-col items-center gap-2">
+         <span className="group-hover:tracking-[0.5em] transition-all duration-500">Deslize para explorar</span>
+         <div className="w-[1px] h-8 bg-gradient-to-b from-black/50 to-transparent" />
+      </div>
 
 
       {/* Modal Add Moment */}
@@ -430,16 +487,69 @@ export const GalleryView = ({
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                        <label className="text-black/50 font-mono text-[10px] uppercase tracking-widest ml-1">URL da Imagem *</label>
-                        <input
-                           type="url"
-                           value={newMoment.url}
-                           onChange={e => setNewMoment({...newMoment, url: e.target.value})}
-                           className="w-full bg-white border border-black/10 rounded-xl px-5 py-4 text-black text-sm outline-none focus:border-black/50 transition-colors"
-                           placeholder="https://..."
-                           required
-                        />
+                    <div className="space-y-2 relative">
+                        <label className="text-black/50 font-mono text-[10px] uppercase tracking-widest ml-1">Imagem (URL ou Upload) *</label>
+                        <div className="flex gap-2">
+                           <input
+                              type="url"
+                              value={newMoment.url.startsWith('data:image') ? '' : newMoment.url}
+                              onChange={e => setNewMoment({...newMoment, url: e.target.value})}
+                              className="flex-1 bg-white border border-black/10 rounded-xl px-4 py-3 text-black text-sm outline-none focus:border-black/50 transition-colors"
+                              placeholder="https://..."
+                           />
+                           <label className="w-12 flex-shrink-0 bg-black/5 hover:bg-black/10 rounded-xl flex items-center justify-center cursor-pointer transition-colors border border-black/10">
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = (event) => {
+                                      const img = new Image();
+                                      img.onload = () => {
+                                        const canvas = document.createElement('canvas');
+                                        let width = img.width;
+                                        let height = img.height;
+                                        const MAX_SIZE = 800; // Resize to max 800px
+
+                                        if (width > height) {
+                                          if (width > MAX_SIZE) {
+                                            height *= MAX_SIZE / width;
+                                            width = MAX_SIZE;
+                                          }
+                                        } else {
+                                          if (height > MAX_SIZE) {
+                                            width *= MAX_SIZE / height;
+                                            height = MAX_SIZE;
+                                          }
+                                        }
+
+                                        canvas.width = width;
+                                        canvas.height = height;
+                                        const ctx = canvas.getContext('2d');
+                                        if (ctx) {
+                                          ctx.drawImage(img, 0, 0, width, height);
+                                          // Compass to JPEG and 0.7 quality to keep size small for Firestore (< 1MB)
+                                          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                                          setNewMoment({...newMoment, url: dataUrl});
+                                        }
+                                      };
+                                      img.src = event.target?.result as string;
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                              />
+                              <Camera size={18} className="text-black/60" />
+                           </label>
+                        </div>
+                        {newMoment.url.startsWith('data:image') && (
+                           <div className="text-[10px] text-emerald-600 font-mono flex items-center mt-1">
+                               <input type="checkbox" checked readOnly className="mr-1" /> Imagem carregada
+                           </div>
+                        )}
                     </div>
                     
                     <div className="space-y-2">

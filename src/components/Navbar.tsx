@@ -36,7 +36,7 @@ export function Navbar({ currentView, onNavigate, children }: any) {
         }`}
       >
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 lg:w-1/3">
             <motion.button 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -50,14 +50,14 @@ export function Navbar({ currentView, onNavigate, children }: any) {
             </motion.button>
             <div className={`flex flex-col justify-center transition-all duration-500 origin-left hidden sm:flex ${scrolled ? 'scale-90 opacity-90' : 'scale-100'}`}>
               <span className="text-white font-medium tracking-tight text-lg leading-none">
-                Nosso<span className="text-[var(--primary)] font-bold">Espaço</span>
+                Connection<span className="text-[var(--primary)] font-bold">Established</span>
               </span>
               <span className="text-white/40 text-[9px] font-mono tracking-widest uppercase mt-1">Conexão Privada</span>
             </div>
           </div>
 
           {/* Desktop Menu */}
-          <nav className="hidden lg:flex items-center gap-1 p-1 rounded-full bg-white/[0.03] border border-white/5 backdrop-blur-md shadow-[inset_0_1px_4px_rgba(255,255,255,0.05)] ml-8 mr-auto">
+          <nav className="hidden lg:flex justify-center items-center gap-1 p-1 rounded-full bg-white/[0.03] border border-white/5 backdrop-blur-md shadow-[inset_0_1px_4px_rgba(255,255,255,0.05)]">
             {MENU_ITEMS.map((item) => {
               const isActive = currentView === item.id;
               return (
@@ -85,7 +85,7 @@ export function Navbar({ currentView, onNavigate, children }: any) {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3 relative z-20">
+          <div className="flex items-center justify-end gap-3 relative z-20 lg:w-1/3">
             <div className="hidden sm:flex items-center gap-2">
               {children}
             </div>
@@ -170,7 +170,7 @@ export function Navbar({ currentView, onNavigate, children }: any) {
               </div>
               
               <div className="p-6 border-t border-white/10 bg-black/20">
-                <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest text-center">Nosso Espaço © {new Date().getFullYear()}</p>
+                <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest text-center">ConnectionEstablished © {new Date().getFullYear()}</p>
               </div>
             </motion.div>
           </>

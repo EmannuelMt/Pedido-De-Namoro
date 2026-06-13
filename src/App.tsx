@@ -6,8 +6,8 @@ import { audioManager } from './lib/audioManager';
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useCallback, useRef, useEffect, FormEvent } from 'react';
-import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
+import React, { useState, useCallback, useRef, useEffect, FormEvent, useMemo } from 'react';
+import { motion, AnimatePresence, useScroll, useSpring, useMotionValue } from 'motion/react';
 import { onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, signInWithGoogle, db } from './lib/firebase';
 import { 
@@ -66,6 +66,7 @@ import { SetupData } from './store/useBuilderStore';
 import { CustomProposalView } from './components/pedido/CustomProposalView';
 import Loader from './components/Loader';
 import { UniverseEmptyState } from './components/UniverseEmptyState';
+import { ConstellationBackground } from './components/ConstellationBackground';
 import { 
   Heart, 
   Home,
@@ -124,7 +125,11 @@ import {
   EyeOff,
   Film,
   Terminal,
-  Leaf
+  Leaf,
+  Mail,
+  Moon,
+  Code,
+  Volume2
 } from 'lucide-react';
 
 // --- Theme Management ---
@@ -1081,222 +1086,693 @@ const YouPedidoIcon = ({ size = 64, className = "" }: { size?: number, className
   </div>
 );
 
-const LoginPage = ({ onLogin, loading }: { onLogin: () => void, loading: boolean }) => {
+
+
+const InteractiveAvatar = ({ mouseX, mouseY, isCoveringEyes, isSmiling }: { mouseX: number, mouseY: number, isCoveringEyes: boolean, isSmiling: boolean }) => {
+  const eyeOffsetX = mouseX * 5;
+  const eyeOffsetY = mouseY * 5;
+
+  return (
+    <div className="relative w-32 h-32 mx-auto mb-6 perspective-1000 z-20">
+      <motion.svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-[0_15px_25px_rgba(0,0,0,0.6)]">
+         {/* Back Hair */}
+         <path d="M 40 180 C 20 80 40 30 100 30 C 160 30 180 80 160 180 Z" fill="#1C1412" />
+         
+         {/* Face */}
+         <path d="M 55 160 C 45 100 55 55 100 55 C 145 55 155 100 145 160 C 130 190 70 190 55 160 Z" fill="#F4D3BA" />
+         
+         {/* Front Hair / Bangs */}
+         <path d="M 45 95 C 60 45 140 45 155 95 C 130 55 70 55 45 95 Z" fill="#110A09" />
+
+         {/* Eyes Whites */}
+         <ellipse cx="80" cy="110" rx="10" ry="7" fill="white" />
+         <ellipse cx="120" cy="110" rx="10" ry="7" fill="white" />
+
+         {/* Pupils pointing based on mouse */}
+         {!isCoveringEyes && !isSmiling && (
+           <motion.g animate={{ x: eyeOffsetX, y: eyeOffsetY }} transition={{ type: 'spring', damping: 20, stiffness: 200 }}>
+             <circle cx="80" cy="110" r="4.5" fill="#2E1C15" />
+             <circle cx="120" cy="110" r="4.5" fill="#2E1C15" />
+           </motion.g>
+         )}
+
+         {/* Closed / Covering eyes */}
+         {(isCoveringEyes || isSmiling) && (
+           <>
+             <path d="M 70 110 Q 80 115 90 110" fill="none" stroke="#2E1C15" strokeWidth="2" strokeLinecap="round" />
+             <path d="M 110 110 Q 120 115 130 110" fill="none" stroke="#2E1C15" strokeWidth="2" strokeLinecap="round" />
+           </>
+         )}
+
+         {/* Mouth */}
+         {isSmiling ? (
+           <path d="M 85 142 Q 100 155 115 142" fill="none" stroke="#A95757" strokeWidth="3" strokeLinecap="round" />
+         ) : (
+           <path d="M 90 145 Q 100 147 110 145" fill="none" stroke="#A95757" strokeWidth="2" strokeLinecap="round" />
+         )}
+
+         {/* Hands covering eyes */}
+         <AnimatePresence>
+            {isCoveringEyes && (
+              <motion.g key="hands" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}>
+                 {/* Left hand */}
+                 <path d="M 50 115 C 60 70 85 100 95 115 C 95 130 60 130 50 115 Z" fill="#F4D3BA" stroke="#DCB79E" strokeWidth="1" />
+                 {/* Right hand */}
+                 <path d="M 150 115 C 140 70 115 100 105 115 C 105 130 140 130 150 115 Z" fill="#F4D3BA" stroke="#DCB79E" strokeWidth="1" />
+              </motion.g>
+            )}
+         </AnimatePresence>
+      </motion.svg>
+    </div>
+  );
+};
+
+const RomanticCharacters = ({ isTypingPassword, authSuccess, mouseX, mouseY }: { isTypingPassword: boolean, authSuccess: boolean, mouseX: any, mouseY: any }) => {
+  return (
+    <div className="flex gap-4 mb-8 justify-center relative translate-y-2">
+      {/* Character 1 (Left) */}
+      <motion.div 
+        animate={authSuccess ? { rotate: [0, -5, 5, 0], scale: 1.05 } : { rotate: 0, scale: 1 }}
+        className="relative w-20 h-24 bg-rose-50 rounded-[40px] border-4 border-white shadow-lg overflow-hidden flex flex-col items-center justify-end pb-3"
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-rose-200/50 to-transparent" />
+        {/* Hair */}
+        <div className="absolute top-0 left-0 w-full h-10 bg-rose-900 rounded-t-[40px] drop-shadow-sm">
+           <div className="absolute top-8 left-[-5px] w-8 h-10 bg-rose-900 rounded-full" />
+           <div className="absolute top-8 right-[-5px] w-8 h-10 bg-rose-900 rounded-full" />
+        </div>
+        
+        {/* Eyes */}
+        <motion.div style={{ x: isTypingPassword || authSuccess ? 0 : mouseX, y: isTypingPassword || authSuccess ? 0 : mouseY }} className="absolute top-10 flex gap-4 w-full justify-center">
+          <motion.div 
+            animate={isTypingPassword ? { height: 2, y: 4, scaleX: 1.5, opacity: 0.6 } : authSuccess ? { height: 2, y: 4, scaleX: 1.5 } : { height: 8 }} 
+            className="w-2.5 bg-rose-900 rounded-full" 
+          />
+          <motion.div 
+            animate={isTypingPassword ? { height: 2, y: 4, scaleX: 1.5, opacity: 0.6 } : authSuccess ? { height: 2, y: 4, scaleX: 1.5 } : { height: 8 }} 
+            className="w-2.5 bg-rose-900 rounded-full" 
+          />
+        </motion.div>
+
+        {/* Blush */}
+        <div className="absolute top-12 flex gap-8 w-full justify-center">
+          <motion.div animate={{ opacity: authSuccess ? 0.9 : 0.4 }} className="w-3 h-1.5 bg-rose-300 rounded-full blur-[1px]" />
+          <motion.div animate={{ opacity: authSuccess ? 0.9 : 0.4 }} className="w-3 h-1.5 bg-rose-300 rounded-full blur-[1px]" />
+        </div>
+
+        {/* Mouth */}
+        <motion.div 
+          animate={{ height: isTypingPassword ? 2 : authSuccess ? 8 : 4, width: isTypingPassword ? 6 : authSuccess ? 12 : 8 }}
+          className="absolute top-14 border-b-2 border-rose-700 rounded-full"
+        />
+
+        {/* Hands */}
+        <motion.div 
+          initial={false}
+          animate={{ y: isTypingPassword ? -22 : authSuccess ? 2 : 5, x: isTypingPassword ? 8 : -8, rotate: isTypingPassword ? -30 : -45 }}
+          className="absolute top-16 left-1 w-6 h-5 bg-rose-100 rounded-full border border-rose-200 shadow-sm"
+        />
+        <motion.div 
+          initial={false}
+          animate={{ y: isTypingPassword ? -22 : authSuccess ? 2 : 5, x: isTypingPassword ? -8 : 8, rotate: isTypingPassword ? 30 : 45 }}
+          className="absolute top-16 right-1 w-6 h-5 bg-rose-100 rounded-full border border-rose-200 shadow-sm"
+        />
+        <div className="absolute bottom-1 w-full flex justify-center"><div className="w-12 h-4 bg-rose-300/30 rounded-full blur-md" /></div>
+      </motion.div>
+
+      {/* Heart floating between them */}
+      <motion.div 
+        animate={{ y: [0, -10, 0], scale: [1, 1.2, 1], opacity: authSuccess ? [0,1,0] : 0.8 }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute top-4 text-rose-400 drop-shadow-md z-10"
+      >
+        <Heart size={20} fill="currentColor" />
+      </motion.div>
+
+      {/* Character 2 (Right) */}
+      <motion.div 
+        animate={authSuccess ? { rotate: [0, 5, -5, 0], scale: 1.05 } : { rotate: 0, scale: 1 }}
+        className="relative w-20 h-24 bg-pink-50 rounded-[40px] border-4 border-white shadow-lg overflow-hidden flex flex-col items-center justify-end pb-3"
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-pink-200/50 to-transparent" />
+        {/* Hair */}
+        <div className="absolute top-0 left-0 w-full h-8 bg-amber-800 rounded-t-[40px] drop-shadow-sm">
+           <div className="absolute top-5 right-[-2px] w-6 h-8 bg-amber-800 rounded-full -rotate-12" />
+        </div>
+        
+        {/* Eyes */}
+        <motion.div style={{ x: isTypingPassword || authSuccess ? 0 : mouseX, y: isTypingPassword || authSuccess ? 0 : mouseY }} className="absolute top-10 flex gap-4 w-full justify-center">
+          <motion.div 
+            animate={isTypingPassword ? { height: 2, y: 4, scaleX: 1.5, opacity: 0.6 } : authSuccess ? { height: 2, y: 4, scaleX: 1.5 } : { height: 8 }} 
+            className="w-2 bg-amber-900 rounded-full" 
+          />
+          <motion.div 
+            animate={isTypingPassword ? { height: 2, y: 4, scaleX: 1.5, opacity: 0.6 } : authSuccess ? { height: 2, y: 4, scaleX: 1.5 } : { height: 8 }} 
+            className="w-2 bg-amber-900 rounded-full" 
+          />
+        </motion.div>
+
+        {/* Blush */}
+        <div className="absolute top-12 flex gap-8 w-full justify-center">
+          <motion.div animate={{ opacity: authSuccess ? 0.9 : 0.4 }} className="w-2.5 h-1.5 bg-pink-300 rounded-full blur-[1px]" />
+          <motion.div animate={{ opacity: authSuccess ? 0.9 : 0.4 }} className="w-2.5 h-1.5 bg-pink-300 rounded-full blur-[1px]" />
+        </div>
+
+        {/* Mouth */}
+        <motion.div 
+          animate={{ height: isTypingPassword ? 2 : authSuccess ? 8 : 4, width: isTypingPassword ? 6 : authSuccess ? 12 : 8 }}
+          className="absolute top-14 border-b-2 border-amber-900 rounded-full"
+        />
+
+        {/* Hands */}
+        <motion.div 
+          initial={false}
+          animate={{ y: isTypingPassword ? -22 : authSuccess ? 2 : 5, x: isTypingPassword ? 8 : -8, rotate: isTypingPassword ? -30 : -45 }}
+          className="absolute top-16 left-1 w-6 h-5 bg-pink-100 rounded-full border border-pink-200 shadow-sm"
+        />
+        <motion.div 
+          initial={false}
+          animate={{ y: isTypingPassword ? -22 : authSuccess ? 2 : 5, x: isTypingPassword ? -8 : 8, rotate: isTypingPassword ? 30 : 45 }}
+          className="absolute top-16 right-1 w-6 h-5 bg-pink-100 rounded-full border border-pink-200 shadow-sm"
+        />
+        <div className="absolute bottom-1 w-full flex justify-center"><div className="w-12 h-4 bg-pink-300/30 rounded-full blur-md" /></div>
+      </motion.div>
+    </div>
+  );
+};
+
+const CodeBackground = () => {
+  const codeLines = [
+    "const love = true;",
+    "if(love) {",
+    "  console.log('Eu escolho você');",
+    "  heartbeat.sync(72);",
+    "}",
+    "",
+    "function initializeConnection(userA, userB) {",
+    "  const bond = new WebSockets.Bond();",
+    "  bond.on('sync', (data) => {",
+    "    if (data.harmony > 0.99) triggerLove();",
+    "  });",
+    "  return bond.connect();",
+    "}",
+    "",
+    "async function buildFuture() {",
+    "  while(true) {",
+    "    await Time.advance(1, 'day');",
+    "    MemoryContainer.push(new Memory(Date.now()));",
+    "  }",
+    "}",
+    "",
+    "// SYS: Core connection established.",
+    "// Awaiting authentication..."
+  ];
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 bg-black flex select-none">
+      <div className="absolute inset-0 z-10" style={{ background: 'linear-gradient(45deg, #000, #111, #1b1b1b, #000)', backgroundSize: '400% 400%', animation: 'gradientBG 15s ease infinite' }} />
+      <style>{`
+        @keyframes gradientBG {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes fall {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(100vh); }
+        }
+      `}</style>
+      
+      {/* Falling Matrix Code */}
+      <div className="absolute inset-0 opacity-[0.07] text-[#d4af37] font-mono text-sm leading-relaxed whitespace-pre z-20 flex">
+        {Array.from({ length: 15 }).map((_, col) => (
+          <motion.div 
+            key={col}
+            initial={{ y: -1000 - Math.random() * 1000 }}
+            animate={{ y: "100vh" }}
+            transition={{ duration: 15 + Math.random() * 15, repeat: Infinity, ease: 'linear' }}
+            className="flex-1 flex flex-col px-4"
+          >
+            {codeLines.map((line, j) => (
+              <div key={j} className="mb-2">{line}</div>
+            ))}
+          </motion.div>
+        ))}
+      </div>
+      
+      {/* Golden Particles */}
+      <div className="absolute inset-0 z-20">
+         {Array.from({ length: 40 }).map((_, i) => (
+            <motion.div 
+              key={i} 
+              animate={{ y: [0, -20, 0], opacity: [0, 0.8, 0] }} 
+              transition={{ duration: 3 + Math.random() * 4, repeat: Infinity, delay: Math.random() * 5 }}
+              className="absolute w-1 h-1 bg-[#d4af37] rounded-full blur-[1px]"
+              style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
+            />
+         ))}
+      </div>
+
+      <div className="absolute top-[20%] right-[10%] w-[40rem] h-[40rem] bg-[#d4af37]/5 rounded-full blur-[120px] pointer-events-none mix-blend-screen z-0" />
+      <div className="absolute bottom-[10%] left-[20%] w-[30rem] h-[30rem] bg-[#d4af37]/5 rounded-full blur-[120px] pointer-events-none mix-blend-screen z-0" />
+    </div>
+  );
+};
+
+const LoginPage = ({ onLogin, loading, onComplete, user }: { onLogin: () => void, loading: boolean, onComplete: () => void, user: any }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  
   const [isRegister, setIsRegister] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setErrorMsg('Preencha e-mail e senha.');
-      return;
+  const [registerStep, setRegisterStep] = useState(1);
+  const [hoverCard, setHoverCard] = useState<number | null>(null);
+  const [fullscreenCard, setFullscreenCard] = useState<number | null>(null);
+
+  const [bootStep, setBootStep] = useState(0);
+  const [bootComplete, setBootComplete] = useState(false);
+
+  useEffect(() => {
+    if (user && !authLoading && bootComplete) {
+       setTimeout(() => onComplete(), 1000);
+    } else if (user && !authLoading && !bootComplete && !errorMsg) {
+       // Se o user já existir antes de clicar em login (ex: guardado na sessão)
+       onComplete();
     }
-    setAuthLoading(true);
+  }, [user, onComplete, authLoading, bootComplete, errorMsg]);
+
+  useEffect(() => {
+     if (authLoading) {
+        let currentStep = 0;
+        const interval = setInterval(() => {
+           if (currentStep < 3) {
+             currentStep++;
+             setBootStep(currentStep);
+           }
+        }, 800);
+        return () => clearInterval(interval);
+     }
+  }, [authLoading]);
+
+  const executeGoogleLogin = async () => {
+     try {
+       setAuthLoading(true);
+       setBootStep(0);
+       setBootComplete(false);
+       
+       const googlePromise = onLogin();
+       const minDelay = new Promise(resolve => setTimeout(resolve, 3500));
+       
+       await Promise.all([googlePromise, minDelay]);
+       
+       setBootStep(4);
+       setBootComplete(true);
+       setAuthLoading(false);
+     } catch (e) {
+       console.error(e);
+       setErrorMsg('Autenticação cancelada ou falhou.');
+       setAuthLoading(false);
+     }
+  };
+
+  const handleNextStep = () => {
+     if (registerStep === 1 && name) setRegisterStep(2);
+     else if (registerStep === 2 && email) setRegisterStep(3);
+  };
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
     setErrorMsg('');
+    
+    if (isRegister) {
+       if (registerStep < 3) {
+          handleNextStep();
+          return;
+       }
+       if (!name || !email || !password) {
+          setErrorMsg('Preencha os dados.');
+          return;
+       }
+    } else {
+       if (!email || !password) {
+          setErrorMsg('Preencha e-mail e senha.');
+          return;
+       }
+    }
+
+    setAuthLoading(true);
+    setBootStep(0);
+    setBootComplete(false);
+    if (isRegister) setRegisterStep(4);
+
+    const minDelay = new Promise(resolve => setTimeout(resolve, 3500));
+
     try {
-      if (isRegister) {
-        await createUserWithEmailAndPassword(auth, email, password);
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
-      }
+      const authPromise = isRegister 
+        ? createUserWithEmailAndPassword(auth, email, password)
+        : signInWithEmailAndPassword(auth, email, password);
+        
+      await Promise.all([authPromise, minDelay]);
+      setBootStep(4); // Finished
+      setBootComplete(true);
+      setAuthLoading(false);
     } catch (err: any) {
       let msg = err.message;
       if (err.code === 'auth/invalid-credential') msg = 'Credenciais inválidas.';
       else if (err.code === 'auth/email-already-in-use') msg = 'E-mail já está em uso.';
       else if (err.code === 'auth/weak-password') msg = 'A senha deve ter pelo menos 6 caracteres.';
       setErrorMsg(msg);
-    } finally {
       setAuthLoading(false);
+      if (isRegister) setRegisterStep(3);
     }
   };
 
+  const cards = [
+    {
+       id: 1,
+       title: "Culinária",
+       desc: "Sabores inesquecíveis para partilhar a dois.",
+       video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+       poster: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&q=80",
+       accent: "from-rose-500/20 to-orange-500/20",
+       icon: <Heart size={20} className="text-rose-400" />
+    },
+    {
+       id: 2,
+       title: "Jogos a Dois",
+       desc: "Diversão e aventuras no mesmo time.",
+       video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+       poster: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80",
+       accent: "from-indigo-500/20 to-purple-500/20",
+       icon: <Star size={20} className="text-indigo-400" />
+    },
+    {
+       id: 3,
+       title: "Viagens",
+       desc: "Explore o mundo e colecione histórias.",
+       video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+       poster: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80",
+       accent: "from-sky-500/20 to-emerald-500/20",
+       icon: <MapPin size={20} className="text-sky-400" />
+    }
+  ];
+
   return (
-    <div className="fixed inset-0 z-[100] flex bg-[var(--bg)] overflow-hidden items-center justify-center font-sans">
-      {/* Background Noise & Lighting */}
-      <div className="absolute inset-0 noise-overlay opacity-30 pointer-events-none" />
-      <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-[var(--primary)]/10 rounded-[100%] mix-blend-screen filter blur-[150px] pointer-events-none animate-pulse hidden md:block" style={{ animationDuration: '8s' }} />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-rose-500/10 rounded-[100%] mix-blend-screen filter blur-[150px] pointer-events-none hidden md:block" />
-      
-      {/* Aesthetic Background Typography */}
-      <div className="absolute left-[10%] top-[20%] text-white/[0.02] font-editorial text-[20vw] leading-none select-none z-0 rotate-12 pointer-events-none italic">
-         Amor
-      </div>
-      
-      <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 gap-12 lg:gap-24 h-full md:h-auto md:min-h-0">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+        .modern-font { font-family: 'Inter', sans-serif; }
+        .tech-title { font-family: 'Orbitron', sans-serif; }
         
-        {/* Left Side: Elegant Presentation */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="flex-1 w-full flex flex-col justify-center items-center lg:items-start text-center lg:text-left mt-12 lg:mt-0 relative"
-        >
-          <div className="relative w-full max-w-[320px] lg:max-w-md aspect-[4/5] rounded-[3rem] overflow-hidden group shadow-2xl mx-auto lg:mx-0">
-            {/* Dark overlay for contrast */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-black/80 via-black/20 to-transparent z-10 pointer-events-none" />
-            <motion.video 
-              autoPlay
-              loop
-              muted
-              playsInline
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-              src="https://videos.pexels.com/video-files/3192257/3192257-hd_1920_1080_25fps.mp4" 
-              className="w-full h-full object-cover grayscale brightness-90 contrast-125 mix-blend-luminosity transform origin-center pointer-events-none"
-            />
-            {/* Content over image */}
-            <div className="absolute bottom-6 left-6 lg:bottom-10 lg:left-10 z-20 pr-6">
-              <Heart size={32} className="text-[var(--primary)] mb-4 lg:mb-6 animate-pulse drop-shadow-[0_0_15px_var(--primary-glow)]" fill="currentColor" />
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif text-white tracking-tighter leading-[0.9] mb-4 drop-shadow-xl italic">
-                Início <br /> Eterno.
-              </h1>
-              <p className="text-white/60 font-mono text-[9px] sm:text-[10px] uppercase tracking-widest max-w-[200px] leading-relaxed drop-shadow-md">
-                Para além do tempo, nossa jornada floresce.
-              </p>
-            </div>
-            {/* Decorative elements */}
-            <div className="absolute top-6 right-6 z-20">
-              <span className="text-[8px] font-mono text-white/40 uppercase tracking-[0.5em] rotate-90 origin-right block">SYS_INIT</span>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Right Side: Professional Login Card */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-          className="w-full max-w-[400px] pb-12 lg:pb-0 perspective-1000"
-        >
-          {/* Card Wrapper */}
-          <div className="relative group">
-            {/* Ambient Glow */}
-            <div className="absolute -inset-1 bg-gradient-to-tr from-[var(--primary)]/20 to-white/5 rounded-[2.5rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-            
-            {/* Main Card */}
-            <div className="relative bg-[#121212]/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl overflow-hidden">
-              {/* Internal subtle gradient */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent pointer-events-none" />
-              
-              <div className="relative z-10 flex flex-col">
-                <div className="mb-8 text-center flex flex-col items-center">
-                   <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-6 shadow-inner border border-white/10">
-                      <Lock size={24} className="text-white/60" />
-                   </div>
-                   <h2 className="text-2xl sm:text-3xl font-serif text-white mb-2 tracking-tight">Acesso Portal</h2>
-                   <p className="text-white/40 text-[9px] font-mono uppercase tracking-widest">
-                     {isRegister ? 'Criar nova conexão' : 'Bem-vindo de volta'}
-                   </p>
-                </div>
-
-                <div className="w-full space-y-5">
-                  <form onSubmit={handleEmailAuth} className="space-y-4">
-                     <div className="space-y-2">
-                        <label htmlFor="emailInput" className="text-white/40 font-mono text-[9px] uppercase tracking-widest ml-2 block">Identificação (E-mail)</label>
-                        <input
-                           id="emailInput"
-                           type="email"
-                           value={email}
-                           onChange={e => setEmail(e.target.value)}
-                           className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-3.5 text-white/80 text-xs font-mono tracking-wider shadow-inner outline-none focus:border-[var(--primary)]/50 transition-colors"
-                           placeholder="jornada@amor.com"
-                           required
-                        />
+        .glass-card {
+           backdrop-filter: blur(20px);
+           background: rgba(255,255,255,0.03);
+           border: 1px solid rgba(255,255,255,0.1);
+           box-shadow: 0 0 40px rgba(212,175,55,0.05), inset 0 0 20px rgba(255,255,255,0.02);
+        }
+        
+        .gold-glow:focus-within {
+           border-color: #d4af37;
+           box-shadow: 0 0 20px rgba(212,175,55,0.3);
+           transform: translateY(-4px);
+        }
+        
+        .btn-gold {
+           background: linear-gradient(45deg, #111, #222);
+           border: 1px solid rgba(212,175,55,0.3);
+           color: #d4af37;
+           box-shadow: 0 0 15px rgba(212,175,55,0.1);
+        }
+        .btn-gold:hover {
+           background: #d4af37;
+           color: #000;
+           box-shadow: 0 0 30px rgba(212,175,55,0.4), 0 0 60px rgba(212,175,55,0.2);
+           transform: scale(1.02);
+        }
+      `}</style>
+      
+      <div className="flex w-full h-screen fixed inset-0 z-50 modern-font bg-slate-950 overflow-hidden text-slate-100">
+        <CodeBackground />
+        
+        {/* Left Pane - Form */}
+        <div className="w-full xl:w-[40%] flex flex-col justify-center p-8 lg:p-16 relative z-20 overflow-y-auto">
+          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="w-full max-w-md mx-auto glass-card p-10 rounded-[2rem]">
+             
+             <div className="flex items-center gap-3 mb-10 text-[#d4af37] isolate">
+               <div className="relative">
+                 <div className="w-12 h-12 bg-black border border-[#d4af37]/30 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.4)] relative z-10">
+                   <Terminal size={22} className="text-[#d4af37]" />
+                 </div>
+                 <div className="absolute inset-0 bg-[#d4af37] blur-xl opacity-40 animate-pulse rounded-xl" />
+               </div>
+               <div className="flex flex-col">
+                 <span className="text-[10px] font-mono tracking-widest text-[#d4af37]/60 uppercase">System Boot</span>
+                 <span className="text-2xl font-bold tech-title tracking-widest text-white mt-1">Connection.</span>
+               </div>
+             </div>
+             
+             {authLoading || bootComplete || (isRegister && registerStep === 4) ? (
+                <div className="flex flex-col items-center justify-center py-8 w-full mt-4">
+                  <div className="w-full max-w-sm glass-card rounded-xl border border-[#d4af37]/30 overflow-hidden mb-8 relative">
+                     <div className="h-8 bg-black/60 border-b border-[#d4af37]/20 flex items-center px-4 gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
+                        <span className="ml-4 text-[10px] text-[#d4af37] font-mono tracking-widest hidden sm:block">mona_lisa.exe</span>
                      </div>
-                     <div className="space-y-2">
-                        <label htmlFor="passwordInput" className="text-white/40 font-mono text-[9px] uppercase tracking-widest ml-2 block">Chave de Acesso (Senha)</label>
-                        <input
-                           id="passwordInput"
-                           type="password"
-                           value={password}
-                           onChange={e => setPassword(e.target.value)}
-                           className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-3.5 text-white/80 text-xs font-mono tracking-wider shadow-inner outline-none focus:border-[var(--primary)]/50 transition-colors"
-                           placeholder="••••••••"
-                           required
-                        />
+                     <div className="p-6 bg-black/80 font-mono text-[13px] leading-relaxed text-slate-300">
+                        <p className="text-pink-500">while<span className="text-slate-300">(</span><span className="text-yellow-300">true</span><span className="text-slate-300">) {"{"}</span></p>
+                        <motion.p 
+                           animate={{ opacity: [0.5, 1, 0.5] }} 
+                           transition={{ duration: 1, repeat: Infinity }}
+                           className="pl-6 text-[#d4af37] font-bold"
+                        >
+                           love++;
+                        </motion.p>
+                        <p className="text-slate-300">{"}"}</p>
                      </div>
-                     
-                     {errorMsg && (
-                       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-rose-400 text-[10px] uppercase font-mono tracking-wider text-center mt-2">
-                         {errorMsg}
-                       </motion.p>
-                     )}
-
-                     <button 
-                       type="submit"
-                       disabled={authLoading}
-                       className="w-full bg-white/10 hover:bg-white/20 text-white active:scale-[0.98] transition-all rounded-2xl py-3.5 px-6 font-medium text-xs font-mono uppercase tracking-widest relative overflow-hidden flex items-center justify-center gap-3 mt-4"
-                     >
-                        {authLoading ? (
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : isRegister ? 'Registrar-se' : 'Entrar com Senha'}
-                     </button>
-                  </form>
-
-                  <div className="flex items-center gap-4 py-2 opacity-40">
-                     <div className="h-px bg-white/20 flex-1" />
-                     <span className="text-white/80 text-[10px] font-mono lowercase tracking-wider">ou</span>
-                     <div className="h-px bg-white/20 flex-1" />
                   </div>
 
-                  {/* Google Login Button */}
-                  <button 
-                    onClick={onLogin}
-                    disabled={loading || authLoading}
-                    className="w-full bg-gradient-to-r from-[var(--primary)] to-rose-400 text-white hover:brightness-110 active:scale-[0.98] transition-all rounded-2xl py-3.5 px-6 font-medium text-xs font-mono uppercase tracking-widest relative overflow-hidden shadow-[0_0_20px_var(--primary-glow)] flex items-center justify-center gap-3 group"
-                  >
-                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
-                    <div className="relative flex items-center gap-3">
-                      {loading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          <span>Conectando...</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg viewBox="0 0 24 24" className="w-5 h-5 bg-white rounded-full p-1 shadow-lg" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                          </svg>
-                          <span>Sintonizar via Google</span>
-                        </>
+                  <div className="w-full max-w-sm mb-6">
+                     <div className="h-1.5 w-full bg-black/50 rounded-full overflow-hidden border border-white/5">
+                        <motion.div 
+                           className="h-full bg-[#d4af37] shadow-[0_0_10px_#d4af37]"
+                           initial={{ width: '0%' }}
+                           animate={{ width: `${(bootStep / 4) * 100}%` }}
+                           transition={{ duration: 0.5 }}
+                        />
+                     </div>
+                  </div>
+
+                  <div className="text-left font-mono space-y-2 min-h-[100px] w-full max-w-sm">
+                    {["Carregando memórias...", "Importando momentos...", "Compilando sentimentos...", "Conectando corações...", "Deploy realizado ❤️"].slice(0, bootStep + 1).map((msg, i) => (
+                         <motion.p 
+                           key={i} 
+                           initial={{ opacity: 0, y: 5 }} 
+                           animate={{ opacity: i === bootStep ? 1 : 0.4, y: 0 }}
+                           className={`text-xs md:text-sm ${i === bootStep ? 'text-[#d4af37] font-bold' : 'text-slate-500'}`}
+                         >
+                           {">"} {msg}
+                         </motion.p>
+                    ))}
+                  </div>
+                </div>
+             ) : (
+             <>
+               <h1 className="text-3xl lg:text-4xl text-white tech-title font-bold mb-3 tracking-wide">
+                  {isRegister ? "Nova Execução" : "Login no Sistema"}
+               </h1>
+               <p className="text-slate-400 text-sm mb-10 font-mono tracking-tight">
+                  {isRegister ? 
+                    (registerStep === 1 ? "1/3: Quem está tentando acessar meu coração?" : 
+                     registerStep === 2 ? "2/3: Qual seu email secreto?" : 
+                     "3/3: Crie sua chave de acesso") 
+                  : "Digite as credenciais para restabelecer a conexão."}
+               </p>
+               
+               <form onSubmit={handleAuth} className="space-y-6 w-full relative z-10">
+                  {/* Register Steps */}
+                  {isRegister && (
+                    <>
+                      {registerStep === 1 && (
+                         <div className="group relative gold-glow rounded-xl transition-all duration-300">
+                           <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-[#d4af37] transition-colors" size={18} />
+                           <input autoFocus type="text" placeholder="Identificador / Nome" className="w-full bg-black/40 border border-white/10 rounded-xl pl-11 pr-4 py-4 outline-none text-slate-200 transition-all text-sm font-mono placeholder:text-slate-600" value={name} onChange={e => setName(e.target.value)} required />
+                         </div>
                       )}
-                    </div>
-                  </button>
+                      
+                      {registerStep === 2 && (
+                         <div className="group relative gold-glow rounded-xl transition-all duration-300">
+                           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-[#d4af37] transition-colors" size={18} />
+                           <input autoFocus type="email" placeholder="E-mail de conexão" className="w-full bg-black/40 border border-white/10 rounded-xl pl-11 pr-4 py-4 outline-none text-slate-200 transition-all text-sm font-mono placeholder:text-slate-600" value={email} onChange={e => setEmail(e.target.value)} required />
+                         </div>
+                      )}
 
-                  <div className="text-center mt-6 pt-2">
-                     <button 
-                       onClick={() => setIsRegister(!isRegister)}
-                       className="text-white/40 hover:text-white transition-colors text-[9px] font-mono tracking-widest uppercase border-b border-transparent hover:border-white/40 pb-1"
-                     >
-                        {isRegister ? 'Já possuo uma chave (Login)' : 'Criar nova chave de acesso (Registrar)'}
-                     </button>
-                  </div>
+                      {registerStep === 3 && (
+                         <div className="group relative gold-glow rounded-xl transition-all duration-300">
+                           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-[#d4af37] transition-colors" size={18} />
+                           <input autoFocus type="password" placeholder="Chave de segurança (senha)" className="w-full bg-black/40 border border-white/10 rounded-xl pl-11 pr-4 py-4 outline-none text-slate-200 transition-all text-sm font-mono placeholder:text-slate-600" value={password} onChange={e => setPassword(e.target.value)} required />
+                         </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Login Form */}
+                  {!isRegister && (
+                    <>
+                      <div className="group relative gold-glow rounded-xl transition-all duration-300">
+                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-[#d4af37] transition-colors" size={18} />
+                         <input type="email" placeholder="Endereço de e-mail" className="w-full bg-black/40 border border-white/10 rounded-xl pl-11 pr-4 py-4 outline-none text-slate-200 transition-all text-sm font-mono placeholder:text-slate-600" value={email} onChange={e => setEmail(e.target.value)} required />
+                      </div>
+                      <div className="group relative gold-glow rounded-xl transition-all duration-300">
+                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-[#d4af37] transition-colors" size={18} />
+                         <input type="password" placeholder="Chave de acesso (senha)" className="w-full bg-black/40 border border-white/10 rounded-xl pl-11 pr-4 py-4 outline-none text-slate-200 transition-all text-sm font-mono placeholder:text-slate-600" value={password} onChange={e => setPassword(e.target.value)} required />
+                      </div>
+                    </>
+                  )}
+                  
+                  {errorMsg && (
+                    <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-mono py-3 px-4 rounded-xl flex items-center gap-2">
+                      <Terminal size={14} />
+                      {errorMsg}
+                    </motion.div>
+                  )}
+                  
+                  <button disabled={authLoading || loading} type="submit" className="w-full relative group btn-gold rounded-xl py-4 mt-2 font-bold tracking-widest text-[13px] uppercase disabled:opacity-70 disabled:cursor-not-allowed">
+                     <span className="relative z-10 flex items-center justify-center gap-2">
+                       {authLoading ? 'Processando...' : (isRegister ? (registerStep < 3 ? 'Avançar' : 'Estabelecer Conexão') : 'Executar Login')}
+                       {!authLoading && <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" /> }
+                     </span>
+                  </button>
+               </form>
+               
+               <div className="w-full my-8 flex items-center justify-center opacity-50">
+                 <div className="h-px w-full bg-gradient-to-r from-transparent to-[#d4af37]/30"></div>
+                 <span className="px-4 text-[10px] font-mono font-bold uppercase tracking-widest text-[#d4af37]">bypass</span>
+                 <div className="h-px w-full bg-gradient-to-l from-transparent to-[#d4af37]/30"></div>
+               </div>
+               
+               <button type="button" onClick={executeGoogleLogin} disabled={authLoading || loading} className="w-full border border-white/10 bg-black/20 rounded-xl py-4 flex items-center justify-center gap-3 hover:bg-white/5 transition-all text-xs font-mono tracking-widest uppercase text-slate-300 group shadow-[inset_0_0_20px_rgba(255,255,255,0.02)]">
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="group-hover:scale-110 transition-transform grayscale group-hover:grayscale-0">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                 </svg>
+                 Auth O-Auth2 Google
+               </button>
+               
+               <p className="mt-8 text-center text-xs text-slate-500 font-mono tracking-wide">
+                 {isRegister ? "SYS.ALREADY_CONNECTED?" : "SYS.NO_ACCESS_KEY?"}
+                 <button type="button" onClick={() => { setIsRegister(!isRegister); setRegisterStep(1); }} className="ml-2 text-[#d4af37] font-bold hover:text-white transition-colors underline decoration-[#d4af37]/30 underline-offset-4">
+                   {isRegister ? "INICIAR SESSÃO" : "SOLICITAR ACESSO"}
+                 </button>
+               </p>
+             </>
+             )}
+          </motion.div>
+        </div>
+        
+        {/* Right Pane - Cards */}
+        <div className="hidden xl:flex w-[60%] relative p-12 items-center justify-center z-10">
+          <div className="w-full max-w-[1400px] h-full flex flex-col justify-center gap-10 relative z-10">
+             
+             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} className="px-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#d4af37]/30 bg-black/50 text-[#d4af37] text-xs font-mono font-bold uppercase tracking-widest mb-4">
+                  <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-pulse shadow-[0_0_10px_#d4af37]"></span>
+                  Módulos de Interface
                 </div>
-              </div>
-            </div>
-            
-            {/* Soft shadow under card */}
-            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-black/40 blur-xl rounded-[100%]" />
+                <h2 className="text-4xl 2xl:text-5xl tech-title font-bold text-white mb-4 tracking-wider">Conexão Estabelecida.</h2>
+                <p className="text-slate-400 font-mono text-sm max-w-xl">Acessando logs de memória e registros afetivos. Selecione uma simulação para iniciar a reprodução neural.</p>
+             </motion.div>
+             
+             {/* Cards Grid */}
+             <div className="grid grid-cols-3 gap-8 flex-1 h-[450px]">
+                {cards.map((card, idx) => (
+                  <motion.div 
+                    key={card.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 + (idx * 0.1) }}
+                    onHoverStart={() => setHoverCard(card.id)}
+                    onHoverEnd={() => setHoverCard(null)}
+                    onClick={() => setFullscreenCard(fullscreenCard === card.id ? null : card.id)}
+                    className={`relative rounded-3xl overflow-hidden cursor-pointer group glass-card flex flex-col hover:border-[#d4af37]/50 transition-all duration-500 shadow-2xl h-full ${fullscreenCard === card.id ? 'fixed inset-4 z-[100] h-auto' : ''}`}
+                    style={fullscreenCard === card.id ? { gridColumn: '1 / -1', gridRow: '1 / -1' } : {}}
+                    layoutId={`card-${card.id}`}
+                  >
+                     <div className="w-full h-full relative bg-slate-950/20 overflow-hidden flex-1">
+                       {/* Video Layer */}
+                       <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${hoverCard === card.id || fullscreenCard === card.id ? 'opacity-100' : 'opacity-60'}`}>
+                         <video 
+                            src={card.video} 
+                            poster={card.poster}
+                            className="w-full h-full object-cover transform scale-100 group-hover:scale-105 transition-transform duration-1000"
+                            autoPlay={hoverCard === card.id || fullscreenCard === card.id}
+                            loop 
+                            muted 
+                            playsInline 
+                         />
+                       </div>
+                       
+                       {/* Gradient Overlay */}
+                       <div className={`absolute inset-0 bg-gradient-to-t ${card.accent} mix-blend-multiply z-10`} />
+                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent opacity-90 z-20 transition-opacity duration-500 group-hover:opacity-70" />
+                       
+                       {/* Play State Indicator */}
+                       <div className="absolute top-6 right-6 z-30">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md border ${hoverCard === card.id ? 'bg-[#d4af37]/20 border-[#d4af37]/50 scale-110 shadow-[0_0_20px_rgba(212,175,55,0.4)]' : 'bg-black/40 border-white/10 scale-100'} transition-all duration-300`}>
+                             {hoverCard === card.id ? <Volume2 size={16} className="text-[#d4af37] animate-pulse" /> : <Play size={16} fill="currentColor" className="text-white/70 ml-0.5" />}
+                          </div>
+                       </div>
+                       
+                       {/* Content Content */}
+                       <div className="absolute bottom-0 left-0 p-8 z-30 w-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                         <div className="w-12 h-12 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 group-hover:border-[#d4af37]/50 transition-all">
+                            {React.cloneElement(card.icon as React.ReactElement, { className: 'text-[#d4af37]' })}
+                         </div>
+                         <h3 className="font-bold text-3xl text-white tech-title tracking-widest mb-3 uppercase">{card.title}</h3>
+                         <div className="h-0 group-hover:h-auto overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-500">
+                           <p className="text-sm font-mono text-slate-300 leading-relaxed max-w-sm">
+                             {card.desc}
+                           </p>
+                           
+                           {fullscreenCard === card.id && (
+                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-6 pt-6 border-t border-white/10">
+                               <p className="text-xs text-[#d4af37] font-mono mb-2">// LOG ENTRY SECURE</p>
+                               <p className="text-slate-200">Detalhes completos da memória revelados apenas após a inicialização real do sistema. Por agora, isto é uma simulação restrita.</p>
+                             </motion.div>
+                           )}
+                         </div>
+                       </div>
+                     </div>
+                  </motion.div>
+                ))}
+             </div>
+             
+             {fullscreenCard && (
+               <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" onClick={() => setFullscreenCard(null)} />
+             )}
+             
           </div>
-        </motion.div>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 const UserMenu = ({ 
   user, 
+  userData,
   onLogout, 
   onNavigate,
   onEditProfile,
   onShowNotifications
 }: { 
   user: User | null, 
+  userData?: any,
   onLogin: () => void, 
   onLogout: () => void, 
   onNavigate: (v: View) => void,
@@ -1304,30 +1780,56 @@ const UserMenu = ({
   onShowNotifications: () => void
 }) => {
   return (
-    <div className="relative">
+    <div className="relative group/usermenu">
       {user ? (
         <motion.button 
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => onNavigate('perfil')}
-          className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full pr-5 pl-1 py-1 transition-all group shadow-xl"
+          className="flex items-center gap-3 bg-black/40 backdrop-blur-md border border-[#d4af37]/20 hover:border-[#d4af37]/50 rounded-full pr-5 pl-1.5 py-1.5 transition-all group shadow-[0_0_20px_rgba(212,175,55,0.05)] hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] relative overflow-hidden"
         >
-          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-[var(--primary)] transition-colors">
-            <img src={user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`} alt={user.displayName || ''} className="w-full h-full object-cover" />
+          {/* Status glow background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#d4af37]/5 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+          
+          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/10 group-hover:border-[#d4af37]/80 transition-colors z-10 shrink-0">
+            <div className="absolute inset-0 border-[3px] border-transparent border-t-[#d4af37]/80 rounded-full animate-[spin_3s_linear_infinite]" />
+            <img src={userData?.photoURL || user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`} alt={userData?.displayName || user.displayName || ''} className="w-full h-full object-cover filter saturate-50 group-hover:saturate-100 transition-all" />
           </div>
-          <div className="flex flex-col items-start pr-2">
-            <span className="text-white/80 font-mono text-[9px] uppercase tracking-widest font-bold group-hover:text-white transition-colors leading-none mb-1">
-              {user.displayName?.split(' ')[0] || 'Usuário'}
-            </span>
-            <span className="text-white/20 font-mono text-[7px] uppercase tracking-tight leading-none italic">Explorador</span>
+          
+          <div className="flex flex-col items-start pr-1 z-10">
+            <div className="flex items-center gap-2 mb-1">
+               <span className="text-white/90 font-mono text-[10px] uppercase tracking-widest font-bold group-hover:text-[#d4af37] transition-colors leading-none">
+                 {(userData?.displayName || user.displayName)?.split(' ')[0] || 'Unknown_User'}
+               </span>
+               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981] animate-pulse" />
+            </div>
+            
+            <div className="flex items-center gap-2 leading-none">
+               <span className="text-white/40 font-mono text-[8px] uppercase tracking-widest">
+                 Lv.99
+               </span>
+               <span className="text-white/20 text-[6px]">|</span>
+               <span className="text-[#d4af37]/70 font-mono text-[8px] uppercase tracking-widest flex items-center gap-1">
+                 SYNC: OK
+               </span>
+            </div>
+          </div>
+          
+          <div className="pl-2 ml-2 border-l border-white/10 flex items-center group-hover:border-[#d4af37]/30 transition-colors z-10">
+             <Settings size={14} className="text-white/40 group-hover:text-[#d4af37] transition-colors group-hover:rotate-90 duration-500" />
           </div>
         </motion.button>
       ) : (
         <button 
           onClick={() => onNavigate('login')}
-          className="flex items-center gap-4 bg-white text-black hover:bg-[var(--primary)] hover:text-white px-8 py-3 rounded-full font-bold text-[10px] uppercase tracking-[0.4em] transition-all shadow-2xl"
+          className="flex items-center gap-3 bg-black/60 backdrop-blur-md border border-[#d4af37]/30 hover:bg-[#d4af37]/10 text-white hover:text-[#d4af37] hover:border-[#d4af37] px-6 py-2.5 rounded-full font-mono text-[10px] uppercase tracking-[0.4em] transition-all shadow-[0_0_15px_rgba(212,175,55,0.05)] hover:shadow-[0_0_30px_rgba(212,175,55,0.2)] group"
         >
-          <UserIcon size={14} /> Acessar Portal
+          <div className="relative flex items-center justify-center">
+             <UserIcon size={14} className="relative z-10" />
+             <div className="absolute inset-0 bg-[#d4af37] blur-md opacity-0 group-hover:opacity-40 transition-opacity" />
+          </div>
+          <span>Sys.Login()</span>
+          <ChevronRight size={14} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
         </button>
       )}
     </div>
@@ -2031,7 +2533,7 @@ function AppInternal() {
       setAuthReady(true);
       if (u) {
         saveUserProfile(u);
-        setView(prev => prev === 'login' ? 'home' : prev);
+        // We do not change view here so LoginPage can show its success animation
       }
     });
     return () => unsubscribe();
@@ -2131,7 +2633,7 @@ function AppInternal() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      setView('home');
+      // View transit handled by LoginPage
     } catch (error: any) {
       console.error("Login failed", error);
       if (error.code === 'auth/unauthorized-domain') {
@@ -2147,6 +2649,7 @@ Isso permitirá que o login funcione neste ambiente.`);
       } else {
         alert("Erro ao entrar: " + error.message);
       }
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -2453,10 +2956,10 @@ Isso permitirá que o login funcione neste ambiente.`);
       />
 
       <FooterLayoutWrapper 
-        footerContent={!['login', 'pedido', 'sucesso', 'galeria'].includes(view) ? <Footer setView={setView} /> : null}
+        footerContent={!['login', 'pedido', 'sucesso', 'galeria', 'perfil'].includes(view) ? <Footer setView={setView} /> : null}
       >
         <AnimatePresence>
-        {!initialLoading && !['landing', 'login', 'pedido', 'sucesso', 'galeria'].includes(view) && (
+        {!initialLoading && !['landing', 'login', 'pedido', 'sucesso', 'galeria', 'perfil'].includes(view) && (
           <Navbar 
             currentView={view} 
             onNavigate={setView}
@@ -2486,14 +2989,15 @@ Isso permitirá que o login funcione neste ambiente.`);
               {/* User Menu Trigger */}
               <UserMenu 
                 user={user} 
+                userData={userData}
                 onLogin={handleLogin} 
                 onLogout={handleLogout} 
                 onNavigate={setView}
                 onShowNotifications={() => setIsNotificationOpen(true)}
                 onEditProfile={() => {
-                  setEditingName(user?.displayName || '');
-                  setEditingPhoto(user?.photoURL || '');
-                  setEditingBio((user as any)?.bio || '');
+                  setEditingName(userData?.displayName || user?.displayName || '');
+                  setEditingPhoto(userData?.photoURL || user?.photoURL || '');
+                  setEditingBio(userData?.bio || (user as any)?.bio || '');
                   setIsEditingProfileQuick(true);
                 }}
               />
@@ -2502,7 +3006,7 @@ Isso permitirá que o login funcione neste ambiente.`);
         )}
       </AnimatePresence>
 
-      <main className={`relative w-full flex-1 flex flex-col items-center min-h-screen ${(!['landing', 'login', 'pedido', 'sucesso'].includes(view) && !initialLoading) ? 'pt-16 md:pt-20 pb-24 md:pb-0' : ''}`}>
+      <main className={`relative w-full flex-1 flex flex-col items-center min-h-screen ${(!['landing', 'login', 'pedido', 'sucesso', 'perfil'].includes(view) && !initialLoading) ? 'pt-16 md:pt-20 pb-24 md:pb-0' : ''}`}>
 
       {/* Theme System Background */}
       <ThemeBackground themeMode={themeMode} THEMES={THEMES} universeData={universeData} />
@@ -2540,26 +3044,51 @@ Isso permitirá que o login funcione neste ambiente.`);
                ))}
             </div>
             
-            <div className="relative z-[110] text-center flex flex-col items-center">
-              <Loader />
+            <div className="relative z-[110] text-center flex flex-col items-center w-full max-w-md px-6">
+              <div className="w-full glass-card rounded-xl border border-[#d4af37]/30 overflow-hidden mb-8 relative shadow-2xl">
+                 <div className="h-8 bg-black/80 border-b border-[#d4af37]/20 flex items-center px-4 gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                    <span className="ml-4 text-[10px] text-[#d4af37] font-mono tracking-widest hidden sm:block">mona_lisa.exe</span>
+                 </div>
+                 <div className="p-8 bg-black/95 font-mono text-[14px] leading-relaxed text-left text-slate-300">
+                    <p className="text-pink-500">while<span className="text-slate-300">(</span><span className="text-yellow-300">true</span><span className="text-slate-300">) {"{"}</span></p>
+                    <motion.p 
+                       animate={{ opacity: [0.3, 1, 0.3] }} 
+                       transition={{ duration: 1.5, repeat: Infinity }}
+                       className="pl-6 text-[#d4af37] font-bold"
+                    >
+                       love++;
+                    </motion.p>
+                    <p className="text-slate-300">{"}"}</p>
+                 </div>
+              </div>
+              
               <motion.p 
-                animate={{ opacity: [0.3, 0.7, 0.3] }}
+                animate={{ opacity: [0.3, 0.8, 0.3] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="text-white/40 font-serif italic text-xl mt-8 tracking-widest"
+                className="text-[#d4af37]/70 font-mono text-sm tracking-widest uppercase mb-4"
               >
-                Sintonizando Nossa Jornada...
+                Iniciando Kernel Afetivo...
               </motion.p>
-              <div className="w-48 h-1 bg-white/5 rounded-full mx-auto overflow-hidden border border-white/10 mt-6 relative">
+
+              <div className="w-64 h-1.5 bg-black/50 rounded-full mx-auto overflow-hidden border border-[#d4af37]/20 relative">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${loadingProgress}%` }}
-                  className="h-full bg-gradient-to-r from-[var(--primary)] via-white to-[var(--primary)] bg-[length:200%_auto] animate-gradient shadow-[0_0_20px_var(--primary-glow)]"
+                  transition={{ duration: 0.1 }}
+                  className="absolute top-0 bottom-0 left-0 bg-[#d4af37] shadow-[0_0_10px_#d4af37]"
                 />
+              </div>
+              
+              <div className="mt-4 h-4 text-xs font-mono text-slate-500">
+                 {loadingProgress === 100 ? "Deploy concluído" : `Carregando chunks... ${Math.round(loadingProgress)}%`}
               </div>
             </div>
           </motion.div>
         ) : view === 'login' ? (
-          <LoginPage onLogin={handleLogin} loading={loading} />
+          <LoginPage user={user} onLogin={handleLogin} loading={loading} onComplete={() => setView('home')} />
         ) : view === ('custom_proposal' as any) && invitedProposal ? (
           <CustomProposalView data={invitedProposal} onAccept={() => setView('sucesso')} />
         ) : view === 'sucesso' ? (
@@ -2664,13 +3193,13 @@ Isso permitirá que o login funcione neste ambiente.`);
 
                 <div className="text-center lg:text-left flex-1 relative z-10">
                   <h2 className="text-5xl md:text-7xl font-serif text-white mb-8 tracking-tighter leading-[0.9] inline-block">
-                    O Nosso <br/>
+                    Connection<br/>
                     <span className="text-rose-500 italic relative">
-                      You Pedido
+                      Established
                       <svg className="absolute -bottom-4 left-0 w-full" viewBox="0 0 100 10" preserveAspectRatio="none">
                         <path d="M0 5 Q 25 0 50 5 T 100 5" fill="none" stroke="currentColor" strokeWidth="2" className="text-rose-500/30" />
                       </svg>
-                    </span> Particular
+                    </span>
                   </h2>
                   <p className="text-white/40 font-serif italic text-2xl max-w-md leading-relaxed mb-10">
                     Sincronizados pelo destino, mantidos pelo amor. Este é o nosso porto seguro na imensidão do mundo.
@@ -3371,29 +3900,37 @@ Isso permitirá que o login funcione neste ambiente.`);
              </motion.div>
           </motion.div>
         ) : view === 'perfil' ? (
-          <UserMenuResolver 
-            user={user}
-            userData={userData}
-            THEMES={THEMES}
-            themeMode={themeMode}
-            layoutMode={layoutMode}
-            handleThemeChange={handleThemeChange}
-            handleLayoutChange={handleLayoutChange}
-            albums={albums}
-            userLetters={userLetters}
-            playlist={playlist}
-            setThemeFilter={setThemeFilter}
-            themeFilter={themeFilter}
-            experienceMode={experienceMode}
-            setExperienceMode={setExperienceMode}
-            proposalMode={proposalMode}
-            setProposalMode={setProposalMode}
-            audioManager={audioManager}
-            handleLogout={handleLogout}
-            setIsDeleteAccountOpen={setIsDeleteAccountOpen}
-            updateUserSettings={updateUserSettings}
-            setView={setView}
-          />
+          <motion.div
+             key="perfil"
+             initial={{ opacity: 0, scale: 0.95 }}
+             animate={{ opacity: 1, scale: 1 }}
+             exit={{ opacity: 0, scale: 0.95 }}
+             className="w-full relative z-[100]"
+          >
+            <UserMenuResolver 
+              user={user}
+              userData={userData}
+              THEMES={THEMES}
+              themeMode={themeMode}
+              layoutMode={layoutMode}
+              handleThemeChange={handleThemeChange}
+              handleLayoutChange={handleLayoutChange}
+              albums={albums}
+              userLetters={userLetters}
+              playlist={playlist}
+              setThemeFilter={setThemeFilter}
+              themeFilter={themeFilter}
+              experienceMode={experienceMode}
+              setExperienceMode={setExperienceMode}
+              proposalMode={proposalMode}
+              setProposalMode={setProposalMode}
+              audioManager={audioManager}
+              handleLogout={handleLogout}
+              setIsDeleteAccountOpen={setIsDeleteAccountOpen}
+              updateUserSettings={updateUserSettings}
+              setView={setView}
+            />
+          </motion.div>
         ) : (
           <NotFoundView setView={setView} />
         )}
