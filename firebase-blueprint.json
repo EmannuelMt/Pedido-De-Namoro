@@ -1,180 +1,199 @@
 {
   "entities": {
-    "userProfile": {
-      "title": "User Profile",
-      "description": "User profile information",
+    "CustomTheme": {
+      "title": "Custom Theme",
+      "description": "Customized theme configuration created in the sandbox",
       "type": "object",
       "properties": {
-        "displayName": { "type": "string" },
-        "email": { "type": "string" },
-        "photoURL": { "type": "string" },
-        "bio": { "type": "string" },
-        "themeMode": { "type": "string" },
-        "config": { "type": "object" },
-        "activeProposalId": { "type": "string" },
-        "updatedAt": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["displayName", "email"]
-    },
-    "Letter": {
-      "title": "Letter",
-      "description": "A love letter or message",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "authorId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["title", "content", "authorId", "createdAt"]
-    },
-    "MusicTrack": {
-      "title": "Music Track",
-      "description": "A musical track or frequency shared by the couple",
-      "type": "object",
-      "properties": {
+        "id": { "type": "string" },
         "name": { "type": "string" },
-        "artist": { "type": "string" },
-        "spotify": { "type": "string" },
-        "reason": { "type": "string" },
-        "lyrics": { "type": "string" },
-        "authorId": { "type": "string" },
-        "likedBy": { "type": "array", "items": { "type": "string" } },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["name", "spotify", "authorId", "createdAt"]
+        "category": { "type": "string" },
+        "colors": { "type": "object" },
+        "layout": { "type": "string" },
+        "animationsEnabled": { "type": "boolean" },
+        "activeEffects": { "type": "array" },
+        "fontFamily": { "type": "string" },
+        "backgroundImage": { "type": "string" },
+        "soundUrl": { "type": "string" },
+        "premium": { "type": "boolean" },
+        "isCustom": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      }
     },
-    "SharedGame": {
-      "title": "Shared Game",
-      "description": "A game that the couple plays together",
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User profile with avatar and banner images",
+      "type": "object",
+      "properties": {
+        "avatar": { "type": "string", "description": "Base64 encoded avatar image" },
+        "banner": { "type": "string", "description": "Base64 encoded banner image" }
+      }
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Dynamic configuration settings for theme, colors, appearance, wallpapers, and saved presets",
+      "type": "object",
+      "properties": {
+        "theme": { "type": "string" },
+        "customPrimary": { "type": "string" },
+        "customSecondary": { "type": "string" },
+        "customAccent": { "type": "string" },
+        "customBg": { "type": "string" },
+        "customText": { "type": "string" },
+        "mode": { "type": "string" },
+        "fontFamily": { "type": "string" },
+        "fontSize": { "type": "string" },
+        "layoutStyle": { "type": "string" },
+        "componentConfig": { "type": "object" },
+        "visualEffects": { "type": "object" },
+        "animationSettings": { "type": "object" },
+        "accessibility": { "type": "object" },
+        "themes": { "type": "array" },
+        "globalWallpaper": { "type": "object" },
+        "pageWallpapers": { "type": "object" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "Story": {
+      "title": "Story",
+      "description": "Timeline/milestone events shared by the couple",
       "type": "object",
       "properties": {
         "title": { "type": "string" },
-        "desc": { "type": "string" },
-        "image": { "type": "string" },
-        "authorId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "date": { "type": "string" },
+        "description": { "type": "string" },
+        "location": { "type": "string" },
+        "icon": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "object" }
       },
-      "required": ["title", "image", "authorId", "createdAt"]
-    },
-    "GalleryPhoto": {
-      "title": "Gallery Photo",
-      "description": "A photo shared in the gallery",
-      "type": "object",
-      "properties": {
-        "url": { "type": "string" },
-        "caption": { "type": "string" },
-        "category": { "type": "string" },
-        "authorId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["url", "authorId", "createdAt"]
+      "required": ["title", "date", "description", "location", "icon"]
     },
     "Album": {
       "title": "Album",
-      "description": "A collection of photos",
+      "description": "Photo album categories created by the couple",
       "type": "object",
       "properties": {
         "title": { "type": "string" },
-        "desc": { "type": "string" },
-        "cover": { "type": "string" },
-        "photos": { "type": "array", "items": { "type": "string" } },
-        "authorId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "date": { "type": "string" },
+        "category": { "type": "string" },
+        "coverUrl": { "type": "string" },
+        "createdAt": { "type": "object" }
       },
-      "required": ["title", "authorId", "createdAt"]
+      "required": ["title", "date", "category"]
     },
-    "Notification": {
-      "title": "Notification",
-      "description": "A notification for a user",
+    "Photo": {
+      "title": "Photo",
+      "description": "Images uploaded inside albums",
+      "type": "object",
+      "properties": {
+        "albumId": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "category": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "object" }
+      },
+      "required": ["title", "category", "imageUrl"]
+    },
+    "GameScore": {
+      "title": "Game Score",
+      "description": "Scores achieved by users on different games",
       "type": "object",
       "properties": {
         "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "gameId": { "type": "string" },
+        "score": { "type": "number" },
+        "createdAt": { "type": "object" }
+      },
+      "required": ["userId", "gameId", "score"]
+    },
+    "UserAchievement": {
+      "title": "User Achievement",
+      "description": "Achievements unlocked by users",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "achievementId": { "type": "string" },
+        "unlockedAt": { "type": "object" }
+      },
+      "required": ["userId", "achievementId"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "In-app notifications representing game events, rewards, social, store and achievements",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
         "title": { "type": "string" },
         "message": { "type": "string" },
-        "type": { "type": "string", "enum": ["info", "success", "warning", "game", "photo", "letter"] },
-        "read": { "type": "boolean" },
-        "link": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "type": { "type": "string" },
+        "category": { "type": "string" },
+        "icon": { "type": "string" },
+        "url": { "type": "string" },
+        "readed": { "type": "boolean" },
+        "createdAt": { "type": "object" }
       },
-      "required": ["userId", "title", "message", "type", "read", "createdAt"]
+      "required": ["userId", "title", "message", "type", "category"]
     },
-    "Secret": {
-      "title": "Secret",
-      "description": "A shared secret",
+    "Song": {
+      "title": "Song",
+      "description": "Shared songs and dedications from the couple",
       "type": "object",
       "properties": {
-        "content": { "type": "string" },
-        "authorName": { "type": "string" },
-        "authorId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "title": { "type": "string" },
+        "artist": { "type": "string" },
+        "feeling": { "type": "string" },
+        "spotifyUrl": { "type": "string" },
+        "spotifyTrackId": { "type": "string" },
+        "addedBy": { "type": "string" },
+        "createdAt": { "type": "object" }
       },
-      "required": ["content", "authorId", "createdAt"]
-    },
-    "Universe": {
-      "title": "Universe",
-      "description": "User's relationship universe configuration",
-      "type": "object",
-      "properties": {
-        "creatorId": { "type": "string" },
-        "settings": { "type": "object" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["creatorId", "settings", "createdAt"]
-    },
-    "Proposal": {
-      "title": "Proposal",
-      "description": "A couple's custom proposal settings",
-      "type": "object",
-      "properties": {
-        "creatorId": { "type": "string" },
-        "settings": { "type": "object" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["creatorId", "settings", "createdAt"]
+      "required": ["title", "artist", "spotifyUrl", "spotifyTrackId"]
     }
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": "userProfile",
-      "description": "User profiles"
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "Notification" },
+      "description": "Real-time in-app notification center alerts and alerts queue"
     },
-    "/secrets/{secretId}": {
-      "schema": "Secret",
-      "description": "Shared secrets"
+    "/user_profiles/{userId}": {
+      "schema": { "$ref": "UserProfile" },
+      "description": "User custom avatar and banner preferences by UID"
     },
-    "/playlist/{trackId}": {
-      "schema": "MusicTrack",
-      "description": "Shared songs"
+    "/user_profiles/{userId}/custom_themes/{themeId}": {
+      "schema": { "$ref": "CustomTheme" },
+      "description": "User custom created themes for the theme engine"
     },
-    "/sharedGames/{gameId}": {
-      "schema": "SharedGame",
-      "description": "Shared games"
+    "/settings/{settingId}": {
+      "schema": { "$ref": "Setting" },
+      "description": "Global customizer/appearance documents (e.g., appearance_config, saved_themes, wallpaper)"
     },
-    "/gallery/{photoId}": {
-      "schema": "GalleryPhoto",
-      "description": "Shared photos"
-    },
-    "/letters/{letterId}": {
-      "schema": "Letter",
-      "description": "Love letters"
+    "/stories/{storyId}": {
+      "schema": { "$ref": "Story" },
+      "description": "Timeline milestones stories"
     },
     "/albums/{albumId}": {
-      "schema": "Album",
-      "description": "Photo albums"
+      "schema": { "$ref": "Album" },
+      "description": "Media albums references"
     },
-    "/notifications/{notificationId}": {
-      "schema": "Notification",
-      "description": "User notifications"
+    "/photos/{photoId}": {
+      "schema": { "$ref": "Photo" },
+      "description": "Media pictures references"
     },
-    "/universes/{universeId}": {
-      "schema": "Universe",
-      "description": "User universes"
+    "/songs/{songId}": {
+      "schema": { "$ref": "Song" },
+      "description": "Shared musical songs and tracks"
     },
-    "/proposals/{proposalId}": {
-      "schema": "Proposal",
-      "description": "Custom proposals"
+    "/game_scores/{scoreId}": {
+      "schema": { "$ref": "GameScore" },
+      "description": "Scores recorded in games"
+    },
+    "/user_achievements/{achievementId}": {
+      "schema": { "$ref": "UserAchievement" },
+      "description": "Records of user-unlocked game achievements"
     }
   }
 }

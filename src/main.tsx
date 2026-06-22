@@ -2,12 +2,12 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import { MusicProvider } from './contexts/MusicContext';
+import { ThemeProvider } from './context/ThemeContext.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MusicProvider>
+    <ThemeProvider>
       <App />
-    </MusicProvider>
+    </ThemeProvider>
   </StrictMode>,
 );

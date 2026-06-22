@@ -1,209 +1,93 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 0. Global Safety Net
+    // Hardened helper functions
+    function isSignedIn() { 
+      return request.auth != null && request.auth.token.email_verified == true; 
+    }
+    
+    function isOwner(userId) { 
+      return isSignedIn() && request.auth.uid == userId; 
+    }
+
+    function isValidSong(data) {
+      return data.title is string && data.title.size() <= 200 &&
+             data.artist is string && data.artist.size() <= 200 &&
+             data.spotifyUrl is string && data.spotifyUrl.size() <= 500 &&
+             data.spotifyTrackId is string && data.spotifyTrackId.size() <= 100;
+    }
+
+    // user_profiles collections
+    match /user_profiles/{userId} {
+      allow read: if true; // Publicly readable so visitors see custom avatars & banners
+      allow write: if isOwner(userId);
+
+      match /custom_themes/{themeId} {
+        allow read: if true;
+        allow write: if isOwner(userId);
+      }
+    }
+
+    // settings collections
+    match /settings/{settingId} {
+      allow read: if true; // Dynamic theme is loaded for all public visitors
+      allow write: if isSignedIn();
+    }
+
+    // stories collections
+    match /stories/{storyId} {
+      allow read: if true; // Anyone can read timeline stories
+      allow write: if isSignedIn();
+    }
+
+    // albums collections
+    match /albums/{albumId} {
+      allow read: if true; // Anyone can read photo albums
+      allow write: if isSignedIn();
+    }
+
+    // photos collections
+    match /photos/{photoId} {
+      allow read: if true; // Anyone can view uploaded photos
+      allow write: if isSignedIn();
+    }
+
+    // videos collections
+    match /videos/{videoId} {
+      allow read: if true; // Anyone can view uploaded videos
+      allow write: if isSignedIn();
+    }
+
+    // songs collections
+    match /songs/{songId} {
+      allow read: if true; // Publicly readable
+      allow create: if isSignedIn() && isValidSong(request.resource.data);
+      allow update: if isSignedIn() && isValidSong(request.resource.data);
+      allow delete: if isSignedIn();
+    }
+
+    // game_scores collections
+    match /game_scores/{scoreId} {
+      allow read: if true; // Anyone can read rankings
+      allow write: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // notifications collection
+    match /notifications/{notificationId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // user_achievements collections
+    match /user_achievements/{achievementId} {
+      allow read: if true; // Anyone can view achievements
+      allow write: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Global safety net: default deny (Moved to bottom)
     match /{document=**} {
       allow read, write: if false;
-    }
-
-    // --- Helpers ---
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function incoming() {
-      return request.resource.data;
-    }
-
-    function existing() {
-      return resource.data;
-    }
-
-    // --- Connection Test ---
-    match /test/connection {
-      allow get: if true;
-    }
-
-    // --- Secrets ---
-    match /secrets/{secretId} {
-      allow list: if isSignedIn();
-      allow get: if isSignedIn();
-      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidSecret(incoming());
-      allow update: if isSignedIn() && existing().authorId == request.auth.uid && 
-                    incoming().diff(existing()).affectedKeys().hasOnly(['content', 'authorName']) &&
-                    isValidSecret(incoming());
-      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
-    }
-
-    function isValidSecret(data) {
-      return data.keys().hasAll(['content', 'authorId', 'createdAt']) &&
-             data.content is string && data.content.size() <= 10000 &&
-             (!data.keys().contains('authorName') || (data.authorName is string && data.authorName.size() <= 100)) &&
-             data.authorId == request.auth.uid &&
-             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
-    }
-
-    // --- User Profiles ---
-    match /users/{userId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isOwner(userId);
-    }
-
-    // --- Letters ---
-    match /letters/{letterId} {
-      allow list: if isSignedIn();
-      allow get: if isSignedIn();
-      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidLetter(incoming());
-      allow update: if isSignedIn() && existing().authorId == request.auth.uid && 
-                    incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content']) &&
-                    isValidLetter(incoming());
-      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
-    }
-
-    function isValidLetter(data) {
-      return data.keys().hasAll(['title', 'content', 'authorId', 'createdAt']) &&
-             data.title is string && data.title.size() <= 200 &&
-             data.content is string && data.content.size() <= 10000 &&
-             data.authorId == request.auth.uid &&
-             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
-    }
-
-    // --- Playlist ---
-    match /playlist/{trackId} {
-      allow list: if isSignedIn();
-      allow get: if isSignedIn();
-      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidMusicTrack(incoming());
-      allow update: if isSignedIn() && isValidMusicTrack(incoming()) && (
-        (existing().authorId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'artist', 'reason', 'lyrics', 'likedBy'])) ||
-        (incoming().diff(existing()).affectedKeys().hasOnly(['likedBy']) && incoming().likedBy is list && incoming().likedBy.size() <= 100)
-      );
-      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
-    }
-
-    function isValidMusicTrack(data) {
-      return data.keys().hasAll(['name', 'spotify', 'authorId', 'createdAt']) &&
-             data.name is string && data.name.size() <= 200 &&
-             data.spotify is string && data.spotify.size() <= 500 &&
-             (resource == null ? data.authorId == request.auth.uid : data.authorId == resource.data.authorId) &&
-             (!data.keys().hasAny(['likedBy']) || (data.likedBy is list && data.likedBy.size() <= 100)) &&
-             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
-    }
-
-    // --- Shared Games ---
-    match /sharedGames/{gameId} {
-      allow list: if isSignedIn();
-      allow get: if isSignedIn();
-      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidSharedGame(incoming());
-      allow update: if isSignedIn() && existing().authorId == request.auth.uid &&
-                    incoming().diff(existing()).affectedKeys().hasOnly(['title', 'desc', 'image']) &&
-                    isValidSharedGame(incoming());
-      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
-    }
-
-    function isValidSharedGame(data) {
-      return data.keys().hasAll(['title', 'image', 'authorId', 'createdAt']) &&
-             data.title is string && data.title.size() <= 200 &&
-             data.image is string && data.image.size() <= 500 &&
-             data.authorId == request.auth.uid &&
-             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
-    }
-
-    // --- Gallery ---
-    match /gallery/{photoId} {
-      allow list: if isSignedIn();
-      allow get: if isSignedIn();
-      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidGalleryPhoto(incoming());
-      allow update: if isSignedIn() && existing().authorId == request.auth.uid &&
-                    incoming().diff(existing()).affectedKeys().hasOnly(['caption', 'category']) &&
-                    isValidGalleryPhoto(incoming());
-      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
-    }
-
-    function isValidGalleryPhoto(data) {
-      return data.keys().hasAll(['url', 'authorId', 'createdAt']) &&
-             data.url is string && data.url.size() <= 1000000 &&
-             (!data.keys().hasAny(['title']) || (data.title is string && data.title.size() <= 200)) &&
-             (!data.keys().hasAny(['caption']) || (data.caption is string && data.caption.size() <= 2000)) &&
-             (!data.keys().hasAny(['category']) || (data.category is string && data.category.size() <= 100)) &&
-             (!data.keys().hasAny(['author']) || (data.author is string && data.author.size() <= 100)) &&
-             data.authorId == request.auth.uid &&
-             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
-    }
-
-    // --- Albums ---
-    match /albums/{albumId} {
-      allow list: if isSignedIn();
-      allow get: if isSignedIn();
-      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidAlbum(incoming());
-      allow update: if isSignedIn() && existing().authorId == request.auth.uid && 
-                    incoming().diff(existing()).affectedKeys().hasOnly(['title', 'desc', 'cover', 'photos']) &&
-                    isValidAlbum(incoming());
-      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
-    }
-
-    function isValidAlbum(data) {
-      return data.keys().hasAll(['title', 'authorId', 'createdAt']) &&
-             data.title is string && data.title.size() <= 100 &&
-             (!data.keys().contains('desc') || (data.desc is string && data.desc.size() <= 500)) &&
-             (!data.keys().contains('cover') || (data.cover is string && data.cover.size() <= 500)) &&
-             (!data.keys().contains('photos') || (data.photos is list && data.photos.size() <= 100)) &&
-             data.authorId == request.auth.uid &&
-             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
-    }
-
-    // --- Notifications ---
-    match /notifications/{notificationId} {
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && isValidNotification(incoming());
-      allow update: if isSignedIn() && existing().userId == request.auth.uid && 
-                    incoming().diff(existing()).affectedKeys().hasOnly(['read']) &&
-                    isValidNotification(incoming());
-      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
-    }
-
-    function isValidNotification(data) {
-      return data.keys().hasAll(['userId', 'title', 'message', 'type', 'read', 'createdAt']) &&
-             data.userId is string &&
-             data.title is string && data.title.size() <= 200 &&
-             data.message is string && data.message.size() <= 1000 &&
-             data.type in ['info', 'success', 'warning', 'game', 'photo', 'letter'] &&
-             data.read is bool &&
-             (resource == null ? (data.createdAt == request.time) : (data.createdAt == resource.data.createdAt));
-    }
-    // --- Proposals & Universes ---
-    match /proposals/{proposalId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && incoming().creatorId == request.auth.uid && isValidProposal(incoming());
-      allow update: if isSignedIn() && existing().creatorId == request.auth.uid && isValidProposal(incoming());
-      allow delete: if isSignedIn() && existing().creatorId == request.auth.uid;
-    }
-
-    match /universes/{universeId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && incoming().creatorId == request.auth.uid && isValidUniverse(incoming());
-      allow update: if isSignedIn() && existing().creatorId == request.auth.uid && isValidUniverse(incoming());
-      allow delete: if isSignedIn() && existing().creatorId == request.auth.uid;
-    }
-
-    function isValidUniverse(data) {
-      return data.keys().hasAll(['creatorId', 'createdAt', 'settings']) &&
-             data.creatorId == request.auth.uid &&
-             data.settings is map &&
-             (resource == null ? (data.createdAt is string) || (data.createdAt == request.time) : true); 
-    }
-
-    function isValidProposal(data) {
-      return data.keys().hasAll(['creatorId', 'createdAt', 'settings']) &&
-             data.creatorId == request.auth.uid &&
-             data.settings is map &&
-             (resource == null ? (data.createdAt is string) || (data.createdAt == request.time) : true); 
     }
   }
 }
